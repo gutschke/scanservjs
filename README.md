@@ -1,4 +1,22 @@
-# scanservjs
+# scanservjs (Enhanced Fork)
+
+> [!IMPORTANT]
+> **This is an enhanced community fork of [sbs20/scanservjs](https://github.com/sbs20/scanservjs).**
+> It includes mission-critical quality-of-life improvements and advanced scanning features.
+
+### 🛠️ How to use this fork
+This repository is organized into branches. **For the best experience, please switch to the [`production`](../../tree/production) branch.** 
+
+The `master` branch is primarily used to stay in sync with the upstream project, whereas `production` contains the stable, fully-featured build.
+
+### 🌟 Key Enhancements (available in `production`)
+*   **🪄 Magic Wand (Smart Autocrop)**: Effortlessly scan photos and non-traditional documents. When scanning from a flatbed, one click automatically detects the document boundaries and crops the image perfectly.
+*   **📏 Pixel-Precise Coordinates**: Gain absolute control over your scans with editable pixel coordinates, allowing for professional-grade accuracy when standard presets aren't enough.
+*   **📂 Full-Resolution File Previews**: High-fidelity, in-browser previews for PDFs, Images, and OCR Text. No more "download-then-check" workflows.
+*   **🖼️ Instant TIFF Transcoding**: Seamlessly preview TIFF files; the server transcodes them to browser-friendly formats on-the-fly with zero disk footprint.
+*   **⚡ Scan on Tab Click**: Faster workflows with the optional ability to trigger a scan immediately simply by clicking the "Scan" tab.
+
+---
 
 [![Build Status](https://img.shields.io/github/actions/workflow/status/sbs20/scanservjs/build.yml?branch=master&style=for-the-badge)](https://github.com/sbs20/scanservjs/actions)
 [![Code QL Status](https://img.shields.io/github/actions/workflow/status/sbs20/scanservjs/codeql-analysis.yml?branch=master&style=for-the-badge&label=CodeQL)](https://github.com/sbs20/scanservjs/actions)
@@ -9,7 +27,7 @@
 
 ![screenshot](https://github.com/sbs20/scanservjs/raw/master/docs/screen0.jpg)
 
-Copyright 2016-2023 [Sam Strachan](https://github.com/sbs20)
+Copyright 2016-2023 [Sam Strachan](https://github.com/sbs20) (Original) | Community Fork Maintainer: [Markus](https://github.com/gutschke) (Current)
 
 ## What people are saying
 
