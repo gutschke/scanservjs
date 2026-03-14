@@ -499,8 +499,17 @@ export default {
 
         if (context.devices && context.devices.length > 0) {
           this.context = context;
-          this.device = context.devices[0];
+          
+          // Selection logic: URL param > pwaConfig scanner (standalone) > Default (first)
+          const urlParams = new URLSearchParams(window.location.search);
+          const requestedId = urlParams.get('deviceId')
+            || (window.matchMedia('(display-mode: standalone)').matches
+              ? storage.pwaConfig.scannerId : null);
+          const found = requestedId ? context.devices.find(d => d.id === requestedId) : null;
+
+          this.device = found || context.devices[0];
           this.request = this.buildRequest();
+          this._applyPwaPresets();
           for (let test of context.diagnostics) {
             if (!test.success) {
               this.notify({ type: 'e', message: test.message });
@@ -535,8 +544,13 @@ export default {
     },
 
     buildRequest() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const urlDeviceId = urlParams.get('deviceId');
       let request = storage.request;
-      if (request && request.params) {
+
+      // A URL deviceId (from an installed PWA) takes precedence over the
+      // device remembered in the last session.
+      if (!urlDeviceId && request && request.params) {
         this.device = this.context.devices.filter(d => d.id === request.params.deviceId)[0]
           || this.context.devices[0];
       }
@@ -604,6 +618,81 @@ export default {
         this.request.params.height = value.dimensions.y;
         this.onCoordinatesChange();
       }
+    },
+
+    _applyPwaPresets() {
+      const urlParams = new URLSearchParams(window.location.search);
+
+      // When running as an installed PWA, read kiosk config from localStorage.
+      // URL params (from a properly-constructed start_url) take precedence if present.
+      const isPwa = window.matchMedia('(display-mode: standalone)').matches;
+      const kioskConfig = isPwa ? (storage.pwaConfig.kiosk || {}) : {};
+
+      // Collect parameters to reset to device defaults: URL 'reset' param plus
+      // any kiosk entries with mode='default'.
+      const resets = (urlParams.get('reset') || '').split(',').filter(x => x);
+      for (const [param, cfg] of Object.entries(kioskConfig)) {
+        if (cfg.mode === 'default' && !resets.includes(param)) {
+          resets.push(param);
+        }
+      }
+
+      // System Default: reset listed parameters to device/admin defaults.
+      resets.forEach(key => {
+        if (key === 'paperSize') {
+          // Paper size has no single device default; reset to the full scanner bed.
+          if (this.geometry) {
+            this.request.params.left = 0;
+            this.request.params.top = 0;
+            this.request.params.width = this.device.features['-x'].limits[1];
+            this.request.params.height = this.device.features['-y'].limits[1];
+          }
+        } else {
+          // device.settings covers pipeline/batchMode; device.features['--key'] covers scanner params.
+          const defaultValue = key in this.device.settings
+            ? this.device.settings[key].default
+            : (`--${key}` in this.device.features ? this.device.features[`--${key}`].default : undefined);
+          if (defaultValue !== undefined) {
+            if (key in this.request.params) {
+              this.request.params[key] = defaultValue;
+            } else if (key in this.request) {
+              this.request[key] = defaultValue;
+            }
+          }
+        }
+      });
+
+      // PWA Preset: collect preset values from localStorage, then let URL params override.
+      const kioskPresets = {};
+      for (const [param, cfg] of Object.entries(kioskConfig)) {
+        if (cfg.mode === 'preset') {
+          kioskPresets[param] = cfg.value;
+        }
+      }
+      urlParams.forEach((value, key) => {
+        const match = key.match(/^kiosk\[(.+)\]$/);
+        if (match) {
+          kioskPresets[match[1]] = value;
+        }
+      });
+
+      // Apply all preset values.
+      for (const [param, value] of Object.entries(kioskPresets)) {
+        if (param === 'paperSize') {
+          const paper = this.context.paperSizes.find(p => p.name === value);
+          if (paper) {
+            this.request.params.width = paper.dimensions.x;
+            this.request.params.height = paper.dimensions.y;
+          }
+        } else if (param in this.request.params) {
+          this.request.params[param] = value;
+        } else if (param in this.request) {
+          this.request[param] = value;
+        }
+      }
+      // The cropper reads its initial position from the cropperDefaultPosition/
+      // cropperDefaultSize computed properties (derived from request.params), so
+      // no explicit sync call is needed here.
     }
   }
 };

@@ -69,3 +69,4 @@ debian
 _site
 .jekyll-metadata
 Gemfile.lock
+scanserv-support.tar
