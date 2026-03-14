@@ -5,7 +5,16 @@
 > It includes mission-critical quality-of-life improvements and advanced scanning features.
 
 ### 🛠️ How to use this fork
-This repository is organized into branches. **For the best experience, please switch to the [`production`](../../tree/production) branch.** 
+This repository is organized into branches. **For the best experience, please switch to the [`production`](../../tree/production) branch.**
+
+#### 📦 Instant Installation (Debian/Ubuntu)
+If you just want to run the latest stable version of this fork, download the pre-built package:
+*   [**Download scanservjs v3.0.4-1 (.deb)**](../../raw/binary/scanservjs_3.0.4-1_all.deb)
+
+To install it with all required dependencies automatically:
+```sh
+sudo apt install ./scanservjs_3.0.4-1_all.deb
+```
 
 The `master` branch is primarily used to stay in sync with the upstream project, whereas `production` contains the stable, fully-featured build.
 
