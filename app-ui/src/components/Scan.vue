@@ -304,6 +304,13 @@ export default {
           return x;
         })
         : undefined;
+    },
+
+    cropperStencilProps() {
+      if (this.aspectRatioLocked && this.lockedAspectRatio) {
+        return { aspectRatio: this.lockedAspectRatio };
+      }
+      return {};
     }
   },
 
@@ -486,6 +493,166 @@ export default {
       params.height = bestValue(params.height, adjusted.height, 0, scanner.height);
       params.left = bestValue(params.left, adjusted.left, 0, scanner.width);
       params.top = bestValue(params.top, adjusted.top, 0, scanner.height);
+
+      if (this.aspectRatioLocked && document.activeElement.tagName !== 'INPUT') {
+        this.lockedAspectRatio = params.width / params.height;
+      }
+    },
+
+    getPixels(mm) {
+      if (!mm || isNaN(mm)) {
+        return 0;
+      }
+      const ppi = this.request.params.resolution || 300;
+      return Math.round((mm / 25.4) * ppi);
+    },
+
+    toggleAspectRatioLock() {
+      this.aspectRatioLocked = !this.aspectRatioLocked;
+      if (this.aspectRatioLocked) {
+        this.lockedAspectRatio = this.request.params.width / this.request.params.height;
+      }
+    },
+
+    parseDimension(value) {
+      if (typeof value === 'string' && value.endsWith('"')) {
+        const amt = parseFloat(value.slice(0, -1));
+        if (!isNaN(amt)) {
+          return round(amt * 25.4, 1);
+        }
+      }
+      const parsed = parseFloat(value);
+      return isNaN(parsed) ? 0 : round(parsed, 1);
+    },
+
+    onDimensionInput(event, field) {
+      const el = event.target;
+      const val = el.value;
+      const pos = el.selectionStart;
+      
+      const params = this.request.params;
+      const oldValMm = params[field];
+      const oldValStr = String(oldValMm);
+      
+      // If the user tried to add a second dot, find where it is
+      const dotCount = (val.match(/\./g) || []).length;
+      
+      if (dotCount > 1) {
+        // Traditional behavior: ignore the second dot
+        // We restore the previous mm value string
+        // Note: this doesn't handle if they pasted multiple dots, but for typing it's perfect
+        el.value = oldValStr;
+        // Restore cursor to where it was minus the ignored dot
+        el.setSelectionRange(pos - 1, pos - 1);
+        return;
+      }
+
+      let clean = "";
+      let newPos = 0;
+      let hasDot = false;
+      
+      for (let i = 0; i < val.length; i++) {
+        const c = val[i];
+        let keep = false;
+        if (c >= '0' && c <= '9') {
+          keep = true;
+        } else if (c === '.' && !hasDot) {
+          keep = true;
+          hasDot = true;
+        } else if (c === '"' && i === val.length - 1) {
+          keep = true;
+        }
+        
+        if (keep) {
+          clean += c;
+          if (i < pos) newPos++;
+        }
+      }
+
+      if (val !== clean) {
+        el.value = clean;
+        el.setSelectionRange(newPos, newPos);
+      }
+    },
+
+    onPixelInput(event) {
+      const el = event.target;
+      const val = el.value;
+      const pos = el.selectionStart;
+      let clean = "";
+      let newPos = 0;
+      for (let i = 0; i < val.length; i++) {
+        const c = val[i];
+        if (c >= '0' && c <= '9') {
+          clean += c;
+          if (i < pos) newPos++;
+        }
+      }
+      if (val !== clean) {
+        el.value = clean;
+        el.setSelectionRange(newPos, newPos);
+      }
+    },
+
+    commitPixel(field, event) {
+      const px = parseInt(event.target.value);
+      if (isNaN(px)) return;
+      
+      const ppi = this.request.params.resolution || 300;
+      const mm = round((px / ppi) * 25.4, 1);
+      
+      const params = this.request.params;
+      const oldVal = params[field];
+
+      if (mm !== oldVal) {
+        params[field] = mm;
+
+        // Apply aspect ratio lock if active
+        if (this.aspectRatioLocked) {
+          if (field === 'width') {
+            params.height = round(mm / this.lockedAspectRatio, 1);
+          } else if (field === 'height') {
+            params.width = round(mm * this.lockedAspectRatio, 1);
+          }
+        }
+        
+        this.onCoordinatesChange();
+      }
+      
+      // Force rewrite field to standardized mm format (or keep px?)
+      // Actually, since it's a px field, let's update it to its standard px value
+      event.target.value = this.getPixels(params[field]);
+    },
+
+    commitDimension(field, event) {
+      let val = event.target.value;
+      let numericVal = this.parseDimension(val);
+      
+      // Prevent negative or completely nonsensical values
+      if (numericVal < 0) {
+        numericVal = Math.abs(numericVal);
+      }
+
+      const params = this.request.params;
+      const oldVal = params[field];
+
+      if (numericVal !== oldVal) {
+        params[field] = numericVal;
+
+        // Apply aspect ratio lock if active
+        if (this.aspectRatioLocked) {
+          if (field === 'width') {
+            params.height = round(numericVal / this.lockedAspectRatio, 1);
+          } else if (field === 'height') {
+            params.width = round(numericVal * this.lockedAspectRatio, 1);
+          }
+        }
+        
+        this.onCoordinatesChange();
+      }
+      
+      // Force rewrite field to standardized mm format
+      event.target.value = params[field];
     },
 
     readContext() {
