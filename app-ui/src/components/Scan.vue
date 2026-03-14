@@ -317,6 +317,7 @@ export default {
   },
 
   mounted() {
+    window.addEventListener('scan-trigger', this.scan);
     this._resizePreview();
     this.readContext().then(() => {
       this.readPreview();
