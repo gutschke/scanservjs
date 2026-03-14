@@ -59,6 +59,31 @@ sudo systemctl restart nginx
 
 ## Cloudflare
 
+scanservjs works behind Cloudflare's reverse proxy, but requires attention
+when Cloudflare Access (Zero Trust) is also in front of it.
+
+### Cloudflare Access: bypass PWA resource paths
+
+The browser fetches PWA resources (manifest, service worker, icons) without
+forwarding session cookies, so Cloudflare Access will redirect those requests
+to its login page. The resulting cross-origin redirect causes a CORS error and
+breaks PWA installation.
+
+Fix: in the Cloudflare Zero Trust dashboard, create a **Bypass** policy rule
+for the following path patterns under your application:
+
+| Path pattern | Purpose |
+|---|---|
+| `/manifest.json*` | PWA web app manifest |
+| `/service-worker.js` | PWA service worker |
+| `/icons/*` | PWA icons |
+| `/favicon.svg` | Favicon |
+
+These resources contain no sensitive data and must be publicly reachable.
+This is optional — without it, all scanning features work normally. Only
+PWA installation fails, and CORS errors appear in the browser developer
+console (invisible to regular users).
+
 ### Content Security Policy and the Cloudflare beacon
 
 Cloudflare automatically injects an analytics beacon script

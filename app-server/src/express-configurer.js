@@ -154,6 +154,34 @@ const EndpointSpecs = [
     method: 'get',
     path: '/api/v1/system',
     callback: async (req, res) => res.send(await api.readSystem())
+  },
+  {
+    method: 'get',
+    path: '/manifest.json',
+    callback: async (req, res) => res.send(api.pwaManifest(req.query))
+  },
+  {
+    method: 'get',
+    path: '/service-worker.js',
+    callback: async (req, res) => {
+      res.type('text/javascript');
+      res.send(api.pwaServiceWorker());
+    }
+  },
+  {
+    method: 'get',
+    path: /\/icons\/pwa-icon\.(png|svg)$/,
+    callback: async (req, res) => {
+      const requestedExt = `.${req.params[0]}`;
+      const iconFiles = config.pwa.iconFiles || [];
+      const iconFile = iconFiles.find(f => path.extname(f).toLowerCase() === requestedExt);
+      if (!iconFile || !fs.existsSync(iconFile)) {
+        res.status(404).send('Not found');
+        return;
+      }
+      res.type(requestedExt === '.svg' ? 'image/svg+xml' : 'image/png');
+      res.sendFile(path.resolve(iconFile));
+    }
   }
 ];
 
@@ -172,6 +200,19 @@ module.exports = class ExpressConfigurer {
     } catch (exception) {
       log.warn(`Error ensuring output and temp directories exist: ${exception}`);
       log.warn(`Currently running node version ${process.version}.`);
+    }
+
+    const iconFiles = config.pwa.iconFiles || [];
+    if (iconFiles.length > 0) {
+      const hasRaster = iconFiles.some(f => path.extname(f).toLowerCase() !== '.svg');
+      if (!hasRaster) {
+        log.warn('config.pwa.iconFiles: no PNG icon provided. PWA installation on Chrome/Chromium requires at least one raster (PNG) icon — SVG alone is not sufficient.');
+      }
+      for (const f of iconFiles) {
+        if (!fs.existsSync(f)) {
+          log.warn(`config.pwa.iconFiles: file not found: ${f}`);
+        }
+      }
     }
   }
 
