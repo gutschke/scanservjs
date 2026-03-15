@@ -50,6 +50,15 @@ function assertFilenameIsSafe(filename) {
   }
 }
 
+function assertContainedIn(parentDir, childPath) {
+  const resolvedParent = path.resolve(parentDir);
+  const resolvedChild = path.resolve(childPath);
+  if (resolvedChild !== resolvedParent
+      && !resolvedChild.startsWith(resolvedParent + path.sep)) {
+    throw new Error('Path escapes its allowed directory');
+  }
+}
+
 module.exports = class FileInfo {
   /**
    * @param {string} fullpath
@@ -59,6 +68,8 @@ module.exports = class FileInfo {
     if (/[?%*:|"<>;=]/.test(fullpath)) {
       throw new Error('Path cannot contain illegal characters: ?%*:|"<>;=');
     }
+
+    const baseDir = fullpath;
 
     const disallowUnsafePaths = false;
     if (disallowUnsafePaths) {
@@ -71,6 +82,10 @@ module.exports = class FileInfo {
     }
 
     this.fullname = path.normalize(fullpath);
+
+    if (filename) {
+      assertContainedIn(baseDir, this.fullname);
+    }
     if (this.exists()) {
       const stat = fs.statSync(this.fullname);
       this.extension = path.extname(this.fullname);
@@ -105,6 +120,13 @@ module.exports = class FileInfo {
    */
   static unsafe(fullpath, filename) {
     return new FileInfo(fullpath, filename);
+  }
+
+  /**
+   * @param {string} filename
+   */
+  static assertFilenameIsSafe(filename) {
+    assertFilenameIsSafe(filename);
   }
 
   /**

@@ -85,6 +85,17 @@ describe('FileInfo', () => {
     assert.throws(() => FileInfo.unsafe('test', '.'), /Error: Name cannot be.*/);
   });
 
+  it('Path containment', () => {
+    const file = FileInfo.unsafe('test/resource', 'logo.png');
+    assert.strictEqual(file.name, 'logo.png');
+  });
+
+  it('Static assertFilenameIsSafe', () => {
+    assert.doesNotThrow(() => FileInfo.assertFilenameIsSafe('valid-file.pdf'));
+    assert.throws(() => FileInfo.assertFilenameIsSafe("bad'file"),
+      /illegal characters/);
+  });
+
   it('Directory traversal', async () => {
     assert.throws(() => FileInfo.unsafe('', '../package.json'), /Error: Name .* illegal char.*/);
     assert.throws(() => FileInfo.unsafe('', '/package.json'), /Error: Name .* illegal char.*/);
