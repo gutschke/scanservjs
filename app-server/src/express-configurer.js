@@ -1,5 +1,6 @@
 const express = require('express');
 const basicAuth = require('express-basic-auth');
+const helmet = require('helmet');
 const fs = require('fs');
 const path = require('path');
 const rootLog = require('loglevel');
@@ -172,6 +173,29 @@ module.exports = class ExpressConfigurer {
       log.warn(`Error ensuring output and temp directories exist: ${exception}`);
       log.warn(`Currently running node version ${process.version}.`);
     }
+  }
+
+  /**
+   * Configures security headers
+   * @returns {ExpressConfigurer}
+   */
+  securityHeaders() {
+    this.app.use(helmet({
+      contentSecurityPolicy: {
+        directives: {
+          defaultSrc: ["'self'"],
+          scriptSrc: ["'self'", "'unsafe-inline'", "https://static.cloudflareinsights.com"],
+          styleSrc: ["'self'", "'unsafe-inline'"],
+          imgSrc: ["'self'", "data:"],
+          frameSrc: ["'self'"],
+          connectSrc: ["'self'", "https://cloudflareinsights.com"],
+          fontSrc: ["'self'", "data:"],
+        }
+      },
+      crossOriginEmbedderPolicy: false,
+      frameguard: { action: 'sameorigin' },
+    }));
+    return this;
   }
 
   /**
