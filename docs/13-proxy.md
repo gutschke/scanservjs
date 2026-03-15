@@ -56,3 +56,16 @@ Restart
 ```sh
 sudo systemctl restart nginx
 ```
+
+## Cloudflare
+
+### Content Security Policy and the Cloudflare beacon
+
+Cloudflare automatically injects an analytics beacon script
+(`static.cloudflareinsights.com`) into HTML pages it proxies. scanservjs's
+Content Security Policy already allows this script and its network connection
+(`cloudflareinsights.com`), so no additional configuration is needed.
+
+If you see a CSP violation for `static.cloudflareinsights.com` in the browser
+console you are likely running an older build — updating to the latest release
+resolves it.
