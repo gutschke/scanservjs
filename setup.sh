@@ -14,7 +14,10 @@
 set -euo pipefail
 
 DEV_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(git -C "$DEV_DIR" rev-parse --show-toplevel)"
+# For a worktree, --show-toplevel returns the worktree root, not the main repo.
+# --git-common-dir returns the shared .git directory; its parent is the main root.
+GIT_COMMON_DIR="$(git -C "$DEV_DIR" rev-parse --git-common-dir)"
+REPO_ROOT="$(cd "$DEV_DIR/$GIT_COMMON_DIR/.." 2>/dev/null && pwd || dirname "$GIT_COMMON_DIR")"
 
 echo "=== scanservjs fork — development environment setup ==="
 echo "Repository root: $REPO_ROOT"
