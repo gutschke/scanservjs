@@ -120,6 +120,19 @@ included in upstream PRs — upstream PRs come from individual feature branches.
   author. No conversational, session-specific, or meta-commentary.
 - The `production` branch merges all features but is NOT submitted upstream.
 
+### Inter-Feature Dependencies
+
+Some features build on other features and have explicit git-level dependencies.
+When merging into production from a clean `master`, dependencies must be merged
+first.
+
+| Feature branch | Depends on |
+|---------------|------------|
+| `feature/editor` | `feature/file-preview` (merged as ancestor) |
+
+All other feature branches are independent and can be cherry-picked in any
+order.
+
 ## Merging Features into Production
 
 ```bash
