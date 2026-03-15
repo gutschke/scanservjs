@@ -88,6 +88,7 @@ fi
 # Add symlinks to the worktree's git exclude file so they don't show as untracked
 WT_GIT_DIR="$(git -C "$TARGET" rev-parse --git-dir)"
 EXCLUDE_FILE="$WT_GIT_DIR/info/exclude"
+mkdir -p "$(dirname "$EXCLUDE_FILE")"
 
 if ! grep -q "^CLAUDE\.md$" "$EXCLUDE_FILE" 2>/dev/null; then
   printf "\n# Claude Code symlinks (managed by dev/setup-worktree.sh)\nCLAUDE.md\n.claude\n" >> "$EXCLUDE_FILE"
