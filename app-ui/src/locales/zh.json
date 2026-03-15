@@ -55,7 +55,10 @@
     "dialog:rename-save": "保存",
     "actions": "操作",
     "message:preview": "Previewing {0}",
-    "no-preview": "No preview available for this file type"
+    "no-preview": "No preview available for this file type",
+    "close": "关闭",
+    "download": "下载",
+    "tiff-browser-unsupported": "大多数浏览器不原生支持 TIFF 文件"
   },
   "navigation": {
     "scan": "扫描",
