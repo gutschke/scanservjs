@@ -23,6 +23,7 @@ git fetch upstream && git merge upstream/master
 | `chore/dev-tools` | Dev infrastructure: CLAUDE.md, setup scripts, devcontainer; worktree at `dev/` |
 | `feature/pr-774` | Upstream pending PR #774 (external author) |
 | `feature/pr-zip` | Upstream pending PR: ZIP download (external author) |
+| `feature/security` | Security hardening: input validation, shell injection prevention |
 
 ## Worktree Map
 
@@ -41,6 +42,7 @@ git fetch upstream && git merge upstream/master
 | `features/ui-fixes/` | `feature/ui-fixes` |
 | `features/editor/` | `feature/editor` |
 | `features/about-fork/` | `feature/about-fork` |
+| `features/security/` | `feature/security` |
 
 `features/`, `dev/`, and `binary/` are excluded from git tracking via
 `.git/info/exclude`.
@@ -128,10 +130,11 @@ first.
 
 | Feature branch | Depends on |
 |---------------|------------|
+| All feature branches | `feature/security` (rebased onto as common base) |
 | `feature/editor` | `feature/file-preview` (merged as ancestor) |
 
-All other feature branches are independent and can be cherry-picked in any
-order.
+All feature branches share `feature/security` as their base (rebased from
+`master`). Beyond that, branches are independent except where noted above.
 
 ## Merging Features into Production
 
