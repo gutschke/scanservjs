@@ -41,8 +41,12 @@ function assertPathIsSafe(path) {
  * @returns {void}
  */
 function assertFilenameIsSafe(filename) {
-  if (/[/\\?%*:|"<>;=]/.test(filename)) {
-    throw new Error('Name cannot contain illegal characters: /\\?%*:|"<>;=');
+  if (/[/\\?%*:|"<>;='`]/.test(filename)) {
+    throw new Error('Name cannot contain illegal characters: /\\?%*:|"<>;=\'`');
+  }
+
+  if (filename === '.' || filename === '..') {
+    throw new Error('Name cannot be "." or ".."');
   }
 }
 

@@ -76,6 +76,13 @@ describe('FileInfo', () => {
     assert.throws(() => FileInfo.unsafe('', 'a?1'), /Error: Name .* illegal char.*/);
     assert.throws(() => FileInfo.unsafe('', 'a<1'), /Error: Name .* illegal char.*/);
     assert.throws(() => FileInfo.unsafe('', 'a>1'), /Error: Name .* illegal char.*/);
+    assert.throws(() => FileInfo.unsafe('', "a'1"), /Error: Name .* illegal char.*/);
+    assert.throws(() => FileInfo.unsafe('', 'a`1'), /Error: Name .* illegal char.*/);
+  });
+
+  it('Dot filenames', async () => {
+    assert.throws(() => FileInfo.unsafe('test', '..'), /Error: Name cannot be.*/);
+    assert.throws(() => FileInfo.unsafe('test', '.'), /Error: Name cannot be.*/);
   });
 
   it('Directory traversal', async () => {
