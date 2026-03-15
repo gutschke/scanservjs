@@ -73,30 +73,95 @@
       <v-col cols="12" md="auto" class="mb-10 mb-md-0" :style="{width: `${preview.width}px`}">
         <cropper v-if="geometry" ref="cropper" :key="preview.key" class="cropper" :transition-time="10" :wheel-resize="false"
             :default-position="cropperDefaultPosition" :default-size="cropperDefaultSize"
-            :src="img" @change="onCropperChange" />
+            :src="img" :stencil-props="cropperStencilProps" @change="onCropperChange" />
         <v-img v-if="!geometry" :src="img" />
       </v-col>
 
       <v-col cols="12" md="3" class="mb-10 mb-md-0">
         <template v-if="geometry">
-          <v-text-field v-model="request.params.top" :label="$t('scan.top')" type="number" step="any" @blur="onCoordinatesChange" />
-          <v-text-field v-model="request.params.left" :label="$t('scan.left')" type="number" step="any" @blur="onCoordinatesChange" />
-          <v-text-field v-model="request.params.width" :label="$t('scan.width')" type="number" step="any" @blur="onCoordinatesChange" />
-          <v-text-field v-model="request.params.height" :label="$t('scan.height')" type="number" step="any" @blur="onCoordinatesChange" />
+          <v-row no-gutters class="mb-2">
+            <v-col cols="6">
+              <v-text-field :model-value="request.params.top" :label="$t('scan.top')" type="text"
+                 @input="onDimensionInput($event, 'top')" @blur="commitDimension('top', $event)" @keyup.enter="$event.target.blur()"
+                 suffix="mm" hide-details="auto" class="dimension-input" />
+            </v-col>
+            <v-col cols="4" class="d-flex align-center justify-center pl-2">
+              <v-text-field :model-value="toPixels(request.params.top)" type="text"
+                 @input="onPixelInput" @blur="commitPixel('top', $event)" @keyup.enter="$event.target.blur()"
+                 suffix="px" hide-details="auto" density="compact" class="dimension-input" />
+            </v-col>
+            <v-col cols="2" />
+          </v-row>
+          <v-row no-gutters class="mb-2">
+            <v-col cols="6">
+              <v-text-field :model-value="request.params.left" :label="$t('scan.left')" type="text"
+                 @input="onDimensionInput($event, 'left')" @blur="commitDimension('left', $event)" @keyup.enter="$event.target.blur()"
+                 suffix="mm" hide-details="auto" class="dimension-input" />
+            </v-col>
+            <v-col cols="4" class="d-flex align-center justify-center pl-2">
+              <v-text-field :model-value="toPixels(request.params.left)" type="text"
+                 @input="onPixelInput" @blur="commitPixel('left', $event)" @keyup.enter="$event.target.blur()"
+                 suffix="px" hide-details="auto" density="compact" class="dimension-input" />
+            </v-col>
+            <v-col cols="2" />
+          </v-row>
+          <v-row no-gutters class="mb-0" align="stretch">
+            <v-col cols="6">
+              <v-text-field :model-value="request.params.width" :label="$t('scan.width')" type="text"
+                 @input="onDimensionInput($event, 'width')" @blur="commitDimension('width', $event)" @keyup.enter="$event.target.blur()"
+                 suffix="mm" hide-details="auto" class="dimension-input" />
+            </v-col>
+            <v-col cols="4" class="d-flex align-center justify-center pl-2">
+              <v-text-field :model-value="toPixels(request.params.width)" type="text"
+                 @input="onPixelInput" @blur="commitPixel('width', $event)" @keyup.enter="$event.target.blur()"
+                 suffix="px" hide-details="auto" density="compact" class="dimension-input" />
+            </v-col>
+            <v-col cols="2" class="lock-arm lock-arm-top" />
+          </v-row>
+          <v-row no-gutters style="height: 24px;">
+            <v-col cols="10" />
+            <v-col cols="2" class="d-flex align-center justify-center">
+              <v-btn
+                :icon="aspectRatioLocked ? mdiLock : mdiLockOpenOutline"
+                variant="text"
+                size="x-small"
+                density="compact"
+                :color="aspectRatioLocked ? 'primary' : undefined"
+                @click="toggleAspectRatioLock"
+              />
+            </v-col>
+          </v-row>
+          <v-row no-gutters class="mb-2" align="stretch">
+            <v-col cols="6">
+              <v-text-field :model-value="request.params.height" :label="$t('scan.height')" type="text"
+                 @input="onDimensionInput($event, 'height')" @blur="commitDimension('height', $event)" @keyup.enter="$event.target.blur()"
+                 suffix="mm" hide-details="auto" class="dimension-input" />
+            </v-col>
+            <v-col cols="4" class="d-flex align-center justify-center pl-2">
+              <v-text-field :model-value="toPixels(request.params.height)" type="text"
+                 @input="onPixelInput" @blur="commitPixel('height', $event)" @keyup.enter="$event.target.blur()"
+                 suffix="px" hide-details="auto" density="compact" class="dimension-input" />
+            </v-col>
+            <v-col cols="2" class="lock-arm lock-arm-bottom" />
+          </v-row>
 
-          <v-menu offset-y>
-            <template #activator="{ props }">
-              <v-btn color="primary" class="mb-4" v-bind="props">{{ $t('scan.paperSize') }}</v-btn>
-            </template>
-            <v-list dense>
-              <v-list-item
-                v-for="(item, index) in paperSizes"
-                :key="index"
-                @click="updatePaperSize(item)">
-                <v-list-item-title>{{ item.name }}</v-list-item-title>
-              </v-list-item>
-            </v-list>
-          </v-menu>
+          <v-row no-gutters class="mb-4">
+            <v-col>
+              <v-menu offset-y>
+                <template #activator="{ props }">
+                  <v-btn color="primary" block v-bind="props">{{ $t('scan.paperSize') }}</v-btn>
+                </template>
+                <v-list dense>
+                  <v-list-item
+                    v-for="(item, index) in paperSizes"
+                    :key="index"
+                    @click="updatePaperSize(item)">
+                    <v-list-item-title>{{ item.name }}</v-list-item-title>
+                  </v-list-item>
+                </v-list>
+              </v-menu>
+            </v-col>
+          </v-row>
         </template>
 
         <template v-if="'--brightness' in device.features">
@@ -132,7 +197,7 @@
 </template>
 
 <script>
-import { mdiCamera, mdiDelete, mdiMagnify, mdiRefresh } from '@mdi/js';
+import { mdiCamera, mdiDelete, mdiMagnify, mdiRefresh, mdiLock, mdiLockOpenOutline } from '@mdi/js';
 import { Cropper } from 'vue-advanced-cropper';
 import { useI18n } from 'vue-i18n';
 import BatchDialog from './BatchDialog.vue';
@@ -193,6 +258,8 @@ export default {
       device: device,
       img: null,
       request: request,
+      aspectRatioLocked: false,
+      lockedAspectRatio: 1,
       preview: {
         timer: 0,
         width: 400,
@@ -304,6 +371,13 @@ export default {
           return x;
         })
         : undefined;
+    },
+
+    cropperStencilProps() {
+      if (this.aspectRatioLocked && this.lockedAspectRatio) {
+        return { aspectRatio: this.lockedAspectRatio };
+      }
+      return {};
     }
   },
 
@@ -598,6 +672,57 @@ export default {
       });
     },
 
+    toggleAspectRatioLock() {
+      this.aspectRatioLocked = !this.aspectRatioLocked;
+      if (this.aspectRatioLocked) {
+        this.lockedAspectRatio = this.request.params.width / this.request.params.height;
+      }
+    },
+
+    toPixels(mm) {
+      const ppi = parseFloat(this.request.params.resolution) || 300;
+      return Math.round((mm / 25.4) * ppi);
+    },
+
+    onDimensionInput(event, field) {
+      const val = event.target.value;
+      this.request.params[field] = val;
+    },
+
+    commitDimension(field, event) {
+      let val = parseFloat(event.target.value);
+      if (isNaN(val)) val = 0;
+      const scanner = this.deviceSize;
+      const max = (field === 'left' || field === 'width') ? scanner.width : scanner.height;
+      val = round(Math.min(Math.max(0, val), max), 1);
+      this.request.params[field] = val;
+      this.onCoordinatesChange();
+    },
+
+    onPixelInput() {},
+
+    commitPixel(field, event) {
+      let val = parseInt(event.target.value);
+      if (isNaN(val)) val = 0;
+      const ppi = parseFloat(this.request.params.resolution) || 300;
+      const mm = round((val / ppi) * 25.4, 1);
+      const scanner = this.deviceSize;
+      const max = (field === 'left' || field === 'width') ? scanner.width : scanner.height;
+      
+      const params = this.request.params;
+      params[field] = Math.min(Math.max(0, mm), max);
+
+      if (this.aspectRatioLocked) {
+        if (field === 'width') {
+          params.height = round(params[field] / this.lockedAspectRatio, 1);
+        } else if (field === 'height') {
+          params.width = round(params[field] * this.lockedAspectRatio, 1);
+        }
+      }
+
+      this.onCoordinatesChange();
+    },
+
     updatePaperSize(value) {
       if (value.dimensions) {
         this.request.params.width = value.dimensions.x;
@@ -610,6 +735,41 @@ export default {
 </script>
 
 <style scoped>
+
+.dimension-input :deep(input) {
+  text-align: right;
+}
+.dimension-input :deep(.v-text-field__suffix) {
+  padding-inline-start: 3px;
+}
+.cropper {
+  max-width: 100%;
+}
+.lock-arm {
+  position: relative;
+}
+.lock-arm-top::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: calc(50% - 8px);
+  bottom: 0;
+  width: 8px;
+  border-top: 2px solid rgba(128, 128, 128, 0.35);
+  border-right: 2px solid rgba(128, 128, 128, 0.35);
+  border-top-right-radius: 4px;
+}
+.lock-arm-bottom::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: calc(50% - 8px);
+  bottom: 50%;
+  width: 8px;
+  border-bottom: 2px solid rgba(128, 128, 128, 0.35);
+  border-right: 2px solid rgba(128, 128, 128, 0.35);
+  border-bottom-right-radius: 4px;
+}
 #mask {
   position: fixed;
   width: 100%;
