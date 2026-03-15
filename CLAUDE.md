@@ -20,8 +20,7 @@ git fetch upstream && git merge upstream/master
 | `production` | All features merged; what users install from this fork |
 | `binary` | Pre-built Debian/Ubuntu package; worktree at `binary/` |
 | `feature/XXX` | One branch per feature; independently submittable as a PR |
-| `chore/devcontainer` | VSCode devcontainer configuration |
-| `chore/dev-tools` | Dev infrastructure: CLAUDE.md, setup scripts; worktree at `dev/` |
+| `chore/dev-tools` | Dev infrastructure: CLAUDE.md, setup scripts, devcontainer; worktree at `dev/` |
 | `feature/pr-774` | Upstream pending PR #774 (external author) |
 | `feature/pr-zip` | Upstream pending PR: ZIP download (external author) |
 
