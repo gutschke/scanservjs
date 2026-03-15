@@ -183,6 +183,9 @@ module.exports = new class Api {
         // Safety for legacy placeholders
         magic = magic.replace(/{TCX}/g, '0');
         magic = magic.replace(/{TCY}/g, '0');
+        if (/[;|&$`\n\r(){}<>]/.test(magic)) {
+          throw new Error('Transformation contains unsafe characters');
+        }
         params.push(magic);
     }
 
@@ -277,12 +280,17 @@ module.exports = new class Api {
     const bedW = device.features['-x'].limits[1];
     const bedH = device.features['-y'].limits[1];
 
+    const left = parseFloat(params.left) || 0;
+    const top = parseFloat(params.top) || 0;
+    const width = parseFloat(params.width) || bedW;
+    const height = parseFloat(params.height) || bedH;
+
     const args = [
       `--image '${source.fullname}'`,
-      `--left ${params.left || 0}`,
-      `--top ${params.top || 0}`,
-      `--width ${params.width || bedW}`,
-      `--height ${params.height || bedH}`,
+      `--left ${left}`,
+      `--top ${top}`,
+      `--width ${width}`,
+      `--height ${height}`,
       `--bed-width ${bedW}`,
       `--bed-height ${bedH}`
     ].join(' ');
