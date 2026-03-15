@@ -1,29 +1,28 @@
-# scanservjs (Enhanced Fork)
+# scanservjs (Community Fork)
 
 > [!IMPORTANT]
-> **This is an enhanced community fork of [sbs20/scanservjs](https://github.com/sbs20/scanservjs).**
-> It includes mission-critical quality-of-life improvements and advanced scanning features.
+> This is a community fork of [sbs20/scanservjs](https://github.com/sbs20/scanservjs),
+> maintained by [Markus Gutschke](https://github.com/gutschke). The `master` branch mirrors
+> upstream. For the full feature set and a pre-built package, see the
+> [`production` branch](https://github.com/gutschke/scanservjs/tree/production).
 
-### 🛠️ How to use this fork
-This repository is organized into branches. **For the best experience, please switch to the [`production`](../../tree/production) branch.**
+## Installing this fork
 
-#### 📦 Instant Installation (Debian/Ubuntu)
-If you just want to run the latest stable version of this fork, download the pre-built package:
-*   [**Download scanservjs v3.0.4-1 (.deb)**](../../raw/binary/scanservjs_3.0.4-1_all.deb)
+Pre-built Debian/Ubuntu packages are available:
 
-To install it with all required dependencies automatically:
 ```sh
+wget https://github.com/gutschke/scanservjs/raw/refs/heads/binary/scanservjs_3.0.4-1_all.deb
 sudo apt install ./scanservjs_3.0.4-1_all.deb
 ```
 
-The `master` branch is primarily used to stay in sync with the upstream project, whereas `production` contains the stable, fully-featured build.
+## Enhancements over upstream
 
-### 🌟 Key Enhancements (available in `production`)
-*   **🪄 Magic Wand (Smart Autocrop)**: Effortlessly scan photos and non-traditional documents. When scanning from a flatbed, one click automatically detects the document boundaries and crops the image perfectly.
-*   **📏 Pixel-Precise Coordinates**: Gain absolute control over your scans with editable pixel coordinates, allowing for professional-grade accuracy when standard presets aren't enough.
-*   **📂 Full-Resolution File Previews**: High-fidelity, in-browser previews for PDFs, Images, and OCR Text. No more "download-then-check" workflows.
-*   **🖼️ Instant TIFF Transcoding**: Seamlessly preview TIFF files; the server transcodes them to browser-friendly formats on-the-fly with zero disk footprint.
-*   **⚡ Scan on Tab Click**: Faster workflows with the optional ability to trigger a scan immediately simply by clicking the "Scan" tab.
+- **Smart Autocrop**: Automatic document boundary detection, deskew, and crop for flatbed scans.
+- **Installable PWA**: Add scanservjs to your home screen; the app name is configurable per instance.
+- **Pixel-Precise Coordinates**: Dual mm/pixel input fields with aspect-ratio lock for exact scan geometry.
+- **File Previews**: In-browser previews for PDFs, images, and OCR text, with on-the-fly TIFF transcoding.
+- **Scan on Tab Click**: Optional immediate scan trigger when revisiting the Scan tab.
+- **UI Fixes**: Various interface refinements and bug fixes.
 
 ---
 
