@@ -40,6 +40,7 @@ git fetch upstream && git merge upstream/master
 | `features/ui-dimensions/` | `feature/ui-dimensions` |
 | `features/ui-fixes/` | `feature/ui-fixes` |
 | `features/editor/` | `feature/editor` |
+| `features/about-fork/` | `feature/about-fork` |
 
 `features/`, `dev/`, and `binary/` are excluded from git tracking via
 `.git/info/exclude`.

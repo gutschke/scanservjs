@@ -87,6 +87,7 @@ create_worktree "features/scan-on-tab-click"    "feature/scan-on-tab-click"
 create_worktree "features/ui-dimensions"        "feature/ui-dimensions"
 create_worktree "features/ui-fixes"             "feature/ui-fixes"
 create_worktree "features/editor"              "feature/editor"
+create_worktree "features/about-fork"          "feature/about-fork"
 
 # ── 6. Claude Code symlinks ──────────────────────────────────────────────────
 echo ""
