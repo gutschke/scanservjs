@@ -104,6 +104,51 @@ if [ "${1:-}" != "--no-install" ]; then
   echo "[npm] Done."
 fi
 
+# ── 8. Python venvs ──────────────────────────────────────────────────────────
+# Each worktree that runs Python scripts needs its own .venv.
+# This mirrors the postinst logic in makedeb.sh so dev and production behave
+# identically.
+setup_venv() {
+  local dir="$1"
+  shift
+  local reqs=("$@")
+
+  # Only create if the requirements files exist (feature may not be present)
+  local any=0
+  for req in "${reqs[@]}"; do
+    [ -f "$req" ] && any=1 && break
+  done
+  [ "$any" -eq 0 ] && return
+
+  if [ ! -d "$dir/.venv" ]; then
+    echo "[venv] Creating .venv in $dir..."
+    python3 -m venv "$dir/.venv"
+    "$dir/.venv/bin/pip" install --quiet --upgrade pip
+  else
+    echo "[venv] .venv already exists in $dir"
+  fi
+
+  for req in "${reqs[@]}"; do
+    if [ -f "$req" ]; then
+      echo "[venv] Installing $req..."
+      "$dir/.venv/bin/pip" install --quiet -r "$req"
+    fi
+  done
+}
+
+echo ""
+echo "[venv] Setting up Python environments..."
+# Production root: install all feature requirements into one shared venv
+setup_venv "$REPO_ROOT" \
+  "$REPO_ROOT/autocrop/requirements.txt" \
+  "$REPO_ROOT/editor/requirements.txt"
+# Individual feature worktrees: install their own requirements
+setup_venv "$REPO_ROOT/features/autocrop" \
+  "$REPO_ROOT/features/autocrop/autocrop/requirements.txt"
+setup_venv "$REPO_ROOT/features/editor" \
+  "$REPO_ROOT/features/editor/editor/requirements.txt"
+echo "[venv] Done."
+
 echo ""
 echo "╔══════════════════════════════════════════════════════════╗"
 echo "║  Setup complete!                                         ║"
