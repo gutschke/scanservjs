@@ -72,9 +72,25 @@ symlinks so there is one source of truth.
 Symlinks are local-only (excluded via per-worktree `info/exclude`). To install
 symlinks in a new worktree: `./dev/setup-worktree.sh <path>`.
 
-`.claude/settings.local.json` is intentionally untracked everywhere (the global
-git config at `~/.config/git/ignore` blocks it). `dev/setup.sh` recreates it
-with `"Bash(*)"` permissions if missing.
+`dev/.claude/settings.json` (tracked) grants `Bash(*)` permissions across all
+worktrees. `settings.local.json` is intentionally untracked (blocked by global
+git config) and is not required; `settings.json` takes precedence.
+
+## Automatic Worktree Navigation
+
+When working on any named feature, automatically operate in the correct worktree
+directory without requiring the user to specify it:
+
+- `feature/pwa` → `features/pwa/`
+- `feature/autocrop` → `features/autocrop/`
+- `feature/XXX` → `features/XXX/`
+- `chore/dev-tools` → `dev/`
+- `binary` → `binary/`
+- `production` / `master` → repo root (`.`)
+
+All git operations on a feature branch must use `git -C features/<name>/` or
+run commands with the correct working directory. Never switch branches in the
+production root to work on a feature — use the worktree.
 
 ## README Policy
 
@@ -124,6 +140,52 @@ git -C binary add scanservjs_*.deb
 git -C binary commit -m "chore(binary): update debian package with <description>"
 git push origin binary
 ```
+
+## Default Post-Work Release Workflow
+
+Unless explicitly told otherwise for a specific session, after completing any
+feature work always perform the full release sequence without prompting:
+
+1. **Commit** changes in the feature worktree (`features/<name>/`).
+2. **Merge** the feature branch into `production` (from the repo root):
+   ```bash
+   git -C . merge feature/<name>
+   ```
+   Resolve any conflicts keeping all production features intact.
+3. **Build** the UI and server from the production root:
+   ```bash
+   npm run build
+   ```
+4. **Package** the Debian binary:
+   ```bash
+   ./makedeb.sh
+   ```
+5. **Update** the `binary` branch:
+   ```bash
+   cp debian/scanservjs_*.deb binary/
+   git -C binary add scanservjs_*.deb
+   git -C binary commit -m "chore(binary): update debian package ..."
+   ```
+6. **Push** everything to GitHub:
+   ```bash
+   git push origin feature/<name>
+   git push origin production
+   git push origin binary
+   ```
+
+**Commit strategy:** Never assume whether to squash, how many commits to
+squash, or whether to create incremental commits. Wait for explicit instruction
+per chat session. Once the user states a squash/commit policy in a session,
+apply it for all subsequent work in that session.
+
+## Work Summary Courtesy
+
+After completing any task, always provide a brief summary of what was done.
+If the Debian binary was rebuilt and pushed, state:
+- Local path: `binary/scanservjs_<version>.deb`
+- GitHub: `origin/binary` branch (`binary/` worktree)
+
+Only mention the binary location when it has actually changed in that session.
 
 ## Adding a New Feature
 
