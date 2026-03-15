@@ -86,6 +86,7 @@ create_worktree "features/pwa"                  "feature/pwa"
 create_worktree "features/scan-on-tab-click"    "feature/scan-on-tab-click"
 create_worktree "features/ui-dimensions"        "feature/ui-dimensions"
 create_worktree "features/ui-fixes"             "feature/ui-fixes"
+create_worktree "features/editor"              "feature/editor"
 
 # ── 6. Claude Code symlinks ──────────────────────────────────────────────────
 echo ""

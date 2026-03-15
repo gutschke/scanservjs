@@ -39,6 +39,7 @@ git fetch upstream && git merge upstream/master
 | `features/scan-on-tab-click/` | `feature/scan-on-tab-click` |
 | `features/ui-dimensions/` | `feature/ui-dimensions` |
 | `features/ui-fixes/` | `feature/ui-fixes` |
+| `features/editor/` | `feature/editor` |
 
 `features/`, `dev/`, and `binary/` are excluded from git tracking via
 `.git/info/exclude`.
