@@ -520,8 +520,7 @@ export default {
 
     createPreview() {
       this.mask(1);
-      this.transformations.magic = '';
-      this.originalParams = null;
+      this.resetTransformations();
       const timer = window.setInterval(this.readPreview, 1000);
       let data = Common.clone(this.request);
       
@@ -554,6 +553,11 @@ export default {
         method: 'DELETE'
       }).then(() => {
         this.notify({ type: 'i', message: this.$t('scan.message:deleted-preview') });
+        this.resetTransformations();
+        if (this.geometry) {
+          this.request.params.top = 0;
+          this.request.params.left = 0;
+        }
         this.readPreview();
         this.mask(-1);
       }).catch(error => {
@@ -941,6 +945,14 @@ export default {
         this.notify({ type: 'e', message: error });
         this.mask(-1);
       });
+    },
+
+    resetTransformations() {
+      this.transformations.rotation = 0;
+      this.transformations.flipH = false;
+      this.transformations.flipV = false;
+      this.transformations.magic = '';
+      this.originalParams = null;
     },
 
     toggleFlipHorizontal() {
