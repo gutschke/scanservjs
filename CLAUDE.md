@@ -122,6 +122,21 @@ included in upstream PRs — upstream PRs come from individual feature branches.
   author. No conversational, session-specific, or meta-commentary.
 - The `production` branch merges all features but is NOT submitted upstream.
 
+### Internationalization (i18n) Policy
+
+Whenever a new i18n key is introduced in `en.json`, translations for **all
+supported locales** must be added in the same commit (or a follow-up commit on
+the same feature branch before merging to production). Supported locales:
+`ar`, `cs`, `de`, `en-US`, `es`, `fr`, `hu`, `it`, `nl`, `pl`, `pt`, `pt-BR`,
+`ru`, `sk`, `tr`, `uk`, `zh`.
+
+- Use idiomatic translations; English loan words are acceptable when a natural
+  equivalent would feel awkward (e.g. "PWA", "pipeline", "preset").
+- Do **not** second-guess or modify existing upstream translations.
+- `test.json` does not need human translations.
+- Decimal/number formatting conventions in UI strings follow the source locale;
+  do not convert number formats.
+
 ### Inter-Feature Dependencies
 
 Some features build on other features and have explicit git-level dependencies.
