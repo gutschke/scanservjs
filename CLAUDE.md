@@ -24,6 +24,7 @@ git fetch upstream && git merge upstream/master
 | `feature/pr-774` | Upstream pending PR #774 (external author) |
 | `feature/pr-zip` | Upstream pending PR: ZIP download (external author) |
 | `feature/security` | Security hardening: input validation, shell injection prevention |
+| `feature/xfa` | XFA PDF → static PDF conversion pipeline |
 
 ## Worktree Map
 
@@ -44,6 +45,7 @@ git fetch upstream && git merge upstream/master
 | `features/about-fork/` | `feature/about-fork` |
 | `features/security/` | `feature/security` |
 | `features/thumbnail/` | `feature/thumbnail` |
+| `features/xfa/` | `feature/xfa` |
 
 `features/`, `dev/`, and `binary/` are excluded from git tracking via
 `.git/info/exclude`.

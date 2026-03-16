@@ -90,6 +90,7 @@ create_worktree "features/editor"              "feature/editor"
 create_worktree "features/about-fork"          "feature/about-fork"
 create_worktree "features/security"            "feature/security"
 create_worktree "features/thumbnail"           "feature/thumbnail"
+create_worktree "features/xfa"               "feature/xfa"
 
 # ── 6. Claude Code symlinks ──────────────────────────────────────────────────
 echo ""
@@ -149,6 +150,8 @@ setup_venv "$REPO_ROOT/features/autocrop" \
   "$REPO_ROOT/features/autocrop/autocrop/requirements.txt"
 setup_venv "$REPO_ROOT/features/editor" \
   "$REPO_ROOT/features/editor/editor/requirements.txt"
+setup_venv "$REPO_ROOT/features/xfa" \
+  "$REPO_ROOT/features/xfa/xfa-convert/requirements.txt"
 echo "[venv] Done."
 
 echo ""
