@@ -89,6 +89,7 @@ create_worktree "features/ui-fixes"             "feature/ui-fixes"
 create_worktree "features/editor"              "feature/editor"
 create_worktree "features/about-fork"          "feature/about-fork"
 create_worktree "features/security"            "feature/security"
+create_worktree "features/thumbnail"           "feature/thumbnail"
 
 # ── 6. Claude Code symlinks ──────────────────────────────────────────────────
 echo ""

@@ -43,6 +43,7 @@ git fetch upstream && git merge upstream/master
 | `features/editor/` | `feature/editor` |
 | `features/about-fork/` | `feature/about-fork` |
 | `features/security/` | `feature/security` |
+| `features/thumbnail/` | `feature/thumbnail` |
 
 `features/`, `dev/`, and `binary/` are excluded from git tracking via
 `.git/info/exclude`.
