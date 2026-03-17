@@ -150,6 +150,7 @@ first.
 |---------------|------------|
 | All feature branches | `feature/security` (rebased onto as common base) |
 | `feature/editor` | `feature/file-preview` (merged as ancestor) |
+| `feature/xfa` | `feature/editor` (rebased onto as base; modifies `editor-session.js`) |
 
 All feature branches share `feature/security` as their base (rebased from
 `master`). Beyond that, branches are independent except where noted above.
