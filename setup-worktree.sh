@@ -95,4 +95,13 @@ if ! grep -q "^CLAUDE\.md$" "$EXCLUDE_FILE" 2>/dev/null; then
   echo "Updated: $EXCLUDE_FILE"
 fi
 
+# Ensure output/ is never accidentally committed from any worktree.
+# output/ is used locally for test documents, scan results, and temporary
+# file transfers (e.g. icons in transit before being placed in their proper
+# location).  It must never enter version control.
+if ! grep -q "^/output/$" "$EXCLUDE_FILE" 2>/dev/null; then
+  printf "\n# Local test documents and scan results — confidential, never commit\n/output/\n" >> "$EXCLUDE_FILE"
+  echo "Protected output/ in: $EXCLUDE_FILE"
+fi
+
 echo "Done: $TARGET"
