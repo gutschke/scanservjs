@@ -127,9 +127,18 @@ if [ "\$1" = "configure" ] ; then
   chown -R $USER:$GROUP $PATH_LIB/.venv
 
   # Setup isolated Python environment for XFA convert (WeasyPrint >=68 requires Python >=3.9)
+  # Use python3.9 explicitly if available (e.g. installed via PPA alongside a 3.8 system default).
   echo "Setting up XFA convert Python environment..."
-  if python3 -c "import sys; sys.exit(0 if sys.version_info >= (3, 9) else 1)" 2>/dev/null; then
-    python3 -m venv $PATH_LIB/xfa-convert/.venv
+  XFA_PYTHON=""
+  for candidate in python3.9 python3.10 python3.11 python3.12 python3; do
+    if command -v "$candidate" >/dev/null 2>&1 && \
+       "$candidate" -c "import sys; sys.exit(0 if sys.version_info >= (3, 9) else 1)" 2>/dev/null; then
+      XFA_PYTHON="$candidate"
+      break
+    fi
+  done
+  if [ -n "$XFA_PYTHON" ]; then
+    $XFA_PYTHON -m venv $PATH_LIB/xfa-convert/.venv
     $PATH_LIB/xfa-convert/.venv/bin/pip install --upgrade pip
     if $PATH_LIB/xfa-convert/.venv/bin/pip install -r $PATH_LIB/xfa-convert/requirements.txt; then
       chown -R $USER:$GROUP $PATH_LIB/xfa-convert/.venv
