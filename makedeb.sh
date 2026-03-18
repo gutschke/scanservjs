@@ -232,6 +232,8 @@ case "\$1" in
 
   remove|upgrade)
     deb-systemd-helper mask 'scanservjs.service' >/dev/null || true
+    # Remove venvs created by postinst (not tracked by dpkg, so dpkg won't clean them)
+    rm -rf $PATH_LIB/.venv $PATH_LIB/xfa-convert/.venv
   ;;
 
   purge)
