@@ -64,6 +64,11 @@ app-server/data/preview/*.tif
 var
 debian
 
+# Local test documents and scan results — must never be committed.
+# This directory may be used for temporary file transfers (e.g. icons
+# being moved to their proper location) but the directory itself stays local.
+/output/
+
 # Python virtual environment
 .venv/
 
