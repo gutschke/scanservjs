@@ -246,7 +246,7 @@ case "\$1" in
     # Let the user know about deleting other stuff
     echo "Consider removing the following. You will need root privileges:"
     echo "  userdel -r $USER"
-    echo "  rf -rf $PATH_ETC $PATH_RUNTIME"
+    echo "  rm -rf $PATH_ETC $PATH_RUNTIME"
   ;;
 
   *)
