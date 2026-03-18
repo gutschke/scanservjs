@@ -130,7 +130,7 @@ if [ "\$1" = "configure" ] ; then
   # Use python3.9 explicitly if available (e.g. installed via PPA alongside a 3.8 system default).
   echo "Setting up XFA convert Python environment..."
   XFA_PYTHON=""
-  for \$cand in python3.9 python3.10 python3.11 python3.12 python3; do
+  for cand in python3.9 python3.10 python3.11 python3.12 python3; do
     if command -v "\$cand" >/dev/null 2>&1 && "\$cand" -c "import sys; sys.exit(0 if sys.version_info >= (3, 9) else 1)" 2>/dev/null; then
       XFA_PYTHON="\$cand"
       break
