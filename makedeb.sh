@@ -126,12 +126,12 @@ if [ "\$1" = "configure" ] ; then
   $PATH_LIB/.venv/bin/pip install -r $PATH_LIB/editor/requirements.txt
   chown -R $USER:$GROUP $PATH_LIB/.venv
 
-  # Setup isolated Python environment for XFA convert (WeasyPrint >=68 requires Python >=3.9)
-  # Use python3.9 explicitly if available (e.g. installed via PPA alongside a 3.8 system default).
+  # Setup isolated Python environment for XFA convert (WeasyPrint >=68 requires Python >=3.10)
+  # Use a versioned binary explicitly if available (e.g. installed via PPA alongside an older default).
   echo "Setting up XFA convert Python environment..."
   XFA_PYTHON=""
-  for cand in python3.9 python3.10 python3.11 python3.12 python3; do
-    if command -v "\$cand" >/dev/null 2>&1 && "\$cand" -c "import sys; sys.exit(0 if sys.version_info >= (3, 9) else 1)" 2>/dev/null; then
+  for cand in python3.10 python3.11 python3.12 python3; do
+    if command -v "\$cand" >/dev/null 2>&1 && "\$cand" -c "import sys; sys.exit(0 if sys.version_info >= (3, 10) else 1)" 2>/dev/null; then
       XFA_PYTHON="\$cand"
       break
     fi
@@ -146,7 +146,7 @@ if [ "\$1" = "configure" ] ; then
       rm -rf $PATH_LIB/xfa-convert/.venv
     fi
   else
-    echo "Note: XFA PDF conversion requires Python >=3.9 (system has \$(python3 --version 2>&1)). Skipping."
+    echo "Note: XFA PDF conversion requires Python >=3.10 (system has \$(python3 --version 2>&1)). Skipping."
   fi
 
   if [ -d /etc/ImageMagick-6 ]; then
