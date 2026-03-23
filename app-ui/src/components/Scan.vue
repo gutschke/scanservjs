@@ -1,5 +1,10 @@
 <template>
   <div>
+    <v-alert v-if="sourceSizeExceeded" type="warning" class="mb-4" density="compact">
+      {{ $t('scan.message:source-size-exceeded') }}
+      <v-btn size="small" variant="outlined" class="ml-4" @click="resetToSourceSize">{{ $t('scan.btn-reset-to-source-size') }}</v-btn>
+    </v-alert>
+
     <v-row>
       <v-spacer />
 
@@ -188,10 +193,12 @@ export default {
           device
         ],
         paperSizes: [],
+        sourceSizes: [],
         version: '0'
       },
       device: device,
       img: null,
+      rawImg: null,
       request: request,
       preview: {
         timer: 0,
@@ -211,6 +218,48 @@ export default {
         width: this.device.features['-x'].limits[1],
         height: this.device.features['-y'].limits[1]
       };
+    },
+
+    effectiveDeviceSize() {
+      if (!this.geometry) {
+        return undefined;
+      }
+      const physical = this.deviceSize;
+      const source = this.request.params.source;
+      const sourceSizes = (this.device.sourceSizes && this.device.sourceSizes.length)
+        ? this.device.sourceSizes
+        : (this.context.sourceSizes || []);
+      if (source && sourceSizes.length) {
+        const constraint = sourceSizes.find(sc =>
+          source.toLowerCase().includes(sc.source.toLowerCase())
+        );
+        if (constraint) {
+          // Use the configured dimensions directly — do not cap against the
+          // SANE-reported physical max.  SANE reports a single device-wide
+          // geometry (usually the flatbed) and the ADF may support longer
+          // paper (e.g. Legal) that exceeds that cap.  The admin's explicit
+          // or auto-detected sourceSizes entry overrides SANE in both directions.
+          return {
+            width: constraint.dimensions.x,
+            height: constraint.dimensions.y
+          };
+        }
+      }
+      return physical;
+    },
+
+    sourceSizeExceeded() {
+      if (!this.geometry) {
+        return false;
+      }
+      const eff = this.effectiveDeviceSize;
+      const physical = this.deviceSize;
+      if (!eff || (eff.width >= physical.width && eff.height >= physical.height)) {
+        return false;
+      }
+      const p = this.request.params;
+      return ((p.left || 0) + (p.width || 0)) > eff.width + 0.1 ||
+             ((p.top || 0) + (p.height || 0)) > eff.height + 0.1;
     },
 
     batchModes() {
@@ -262,13 +311,10 @@ export default {
         return undefined;
       }
 
-      const deviceSize = {
-        x: this.device.features['-x'].limits[1],
-        y: this.device.features['-y'].limits[1]
-      };
+      const eff = this.effectiveDeviceSize;
 
       return this.context.paperSizes
-        .filter(paper => paper.dimensions.x <= deviceSize.x && paper.dimensions.y <= deviceSize.y)
+        .filter(paper => paper.dimensions.x <= eff.width && paper.dimensions.y <= eff.height)
         .map(paper => {
           const variables = (paper.name.match(/@:[a-z-.]+/ig) || []).map(s => s.substr(2));
           variables.forEach(v => {
@@ -313,6 +359,9 @@ export default {
         storage.request = request;
       },
       deep: true
+    },
+    'request.params.source'() {
+      this._extendPreviewCanvas();
     }
   },
 
@@ -330,7 +379,7 @@ export default {
   methods: {
     _resizePreview() {
       const paperRatio = this.geometry
-        ? this.deviceSize.width / this.deviceSize.height
+        ? this.effectiveDeviceSize.width / this.effectiveDeviceSize.height
         : 210 / 297;
 
       // This only makes a difference when the col-width="auto" - so md+
@@ -401,7 +450,7 @@ export default {
     },
 
     pixelsPerMm() {
-      const scanner = this.deviceSize;
+      const scanner = this.effectiveDeviceSize;
 
       // The preview image may not have perfectly scaled dimensions
       // because pixel counts are integers. So we report a horizontal
@@ -464,6 +513,11 @@ export default {
     },
 
     onCropperChange({ coordinates }) {
+      if (this._ignoreCropperChange) {
+        this._ignoreCropperChange = false;
+        return;
+      }
+
       const adjusted = this.scaleCoordinates(
         coordinates,
         1 / this.pixelsPerMm().x,
@@ -474,7 +528,7 @@ export default {
       // If someone is taking the trouble to set values manually then they
       // should be preserved. We should only update the values if they breach
       // a threshold or the scanner dimensions
-      const scanner = this.deviceSize;
+      const scanner = this.effectiveDeviceSize;
       const params = this.request.params;
       const threshold = 0.4;
       const boundAndRound = (n, min, max) => round(Math.min(Math.max(min, n), max), 1);
@@ -520,6 +574,39 @@ export default {
       });
     },
 
+    _extendPreviewCanvas() {
+      const raw = this.rawImg;
+      if (!raw || !this.geometry) {
+        this.img = raw;
+        this._resizePreview();
+        return;
+      }
+      const eff = this.effectiveDeviceSize;
+      const phys = this.deviceSize;
+      if (!eff || !phys || eff.height <= phys.height) {
+        this.img = raw;
+        this._resizePreview();
+        return;
+      }
+      // The effective scan area (ADF) is taller than the physical flatbed.
+      // Extend the preview canvas downward with a grey fill so the cropper
+      // has the full ADF height available for selection.
+      const srcImg = new Image();
+      srcImg.onload = () => {
+        const scale = eff.height / phys.height;
+        const canvas = document.createElement('canvas');
+        canvas.width = srcImg.width;
+        canvas.height = Math.round(srcImg.height * scale);
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#d0d0d0';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(srcImg, 0, 0, srcImg.width, srcImg.height);
+        this.img = canvas.toDataURL('image/jpeg', 0.9);
+        this._resizePreview();
+      };
+      srcImg.src = raw;
+    },
+
     readPreview() {
       // Gets the preview image as a base64 encoded jpg and updates the UI
       const uri = 'api/v1/preview?' + new URLSearchParams(
@@ -529,8 +616,8 @@ export default {
         cache: 'no-store',
         method: 'GET'
       }).then(data => {
-        this.img = 'data:image/jpeg;base64,' + data.content;
-        this._resizePreview();
+        this.rawImg = 'data:image/jpeg;base64,' + data.content;
+        this._extendPreviewCanvas();
       });
     },
 
@@ -600,10 +687,26 @@ export default {
 
     updatePaperSize(value) {
       if (value.dimensions) {
+        this.request.params.left = 0;
+        this.request.params.top = 0;
         this.request.params.width = value.dimensions.x;
         this.request.params.height = value.dimensions.y;
+        this._ignoreCropperChange = true;
         this.onCoordinatesChange();
       }
+    },
+
+    resetToSourceSize() {
+      const eff = this.effectiveDeviceSize;
+      if (!eff) {
+        return;
+      }
+      const p = this.request.params;
+      p.width = Math.min(p.width || eff.width, eff.width);
+      p.height = Math.min(p.height || eff.height, eff.height);
+      p.left = Math.min(p.left || 0, Math.max(0, eff.width - p.width));
+      p.top = Math.min(p.top || 0, Math.max(0, eff.height - p.height));
+      this.onCoordinatesChange();
     }
   }
 };

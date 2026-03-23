@@ -173,7 +173,9 @@
     "message:no-devices": "Found no devices",
     "message:deleted-preview": "Deleted preview",
     "message:turn-documents": "Turn documents over",
-    "message:preview-of-page": "Preview of page"
+    "message:preview-of-page": "Preview of page",
+    "message:source-size-exceeded": "The selected crop area exceeds the maximum size supported by the current source.",
+    "btn-reset-to-source-size": "Fit to source"
   },
 
   "settings": {

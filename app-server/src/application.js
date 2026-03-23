@@ -82,19 +82,30 @@ module.exports = new class Application {
       if (devices.length === 0) {
         this.log().debug('devices.json contains no devices. Reloading');
         devices = null;
+      } else if (Array.isArray(o) && o.some(d => typeof d === 'string' || !('sourceSizes' in d))) {
+        // Cache is in the old format (plain SANE strings without sourceSizes).
+        // Invalidate so eSCL detection runs on next load.
+        this.log().info('devices.json is in old format (no sourceSizes). Reloading');
+        devices = null;
       }
     } else {
       this.log().info('devices.json does not exist. Reloading');
     }
 
     if (devices === null) {
+      const SourceSizesDetector = require('./classes/source-sizes-detector');
       let deviceIds = config.devices;
       this.log().debug({'Config.devices': deviceIds});
+      /** @type {Object.<string, string>} map deviceId → description from scanimage -L */
+      const descriptionMap = {};
       if (config.devicesFind) {
         const data = await Process.execute(scanimageCommand.devices());
         this.log().debug({'devices': data});
-        const localDevices = new DeviceIdParser(data).ids();
-        deviceIds = deviceIds.concat(localDevices);
+        const entries = new DeviceIdParser(data).entries();
+        for (const entry of entries) {
+          descriptionMap[entry.id] = entry.description;
+        }
+        deviceIds = deviceIds.concat(Object.keys(descriptionMap));
       }
 
       /** @type {ScanDevice[]} */
@@ -103,12 +114,17 @@ module.exports = new class Application {
         try {
           const data = await Process.execute(scanimageCommand.features(deviceId));
           this.log().debug(`features: ${data}`);
-          devices.push(Device.from(data));
+          const device = Device.from(data);
+          if (descriptionMap[deviceId]) {
+            device.sourceSizes = await SourceSizesDetector.detect(descriptionMap[deviceId]);
+          }
+          devices.push(device);
         } catch (error) {
           this.log().error(`Ignoring ${deviceId}. Error: ${error}`);
         }
       }
-      file.save(JSON.stringify(devices.map(d => d.string), null, 2));
+      file.save(JSON.stringify(
+        devices.map(d => ({ sane: d.string, sourceSizes: d.sourceSizes })), null, 2));
     }
 
     return devices;

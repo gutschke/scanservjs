@@ -58,6 +58,18 @@ module.exports = class Context {
       device.settings = objectMerger.deepMerge({}, defaultSettings(), device.settings);
     });
 
+    // Merge per-source size information onto each device.
+    // config.sourceSizes (admin override) takes precedence over auto-detected
+    // device.sourceSizes; either may be empty.
+    const configSourceSizes = config.sourceSizes || [];
+    devices.forEach(device => {
+      if (configSourceSizes.length > 0) {
+        device.sourceSizes = configSourceSizes;
+      } else {
+        device.sourceSizes = device.sourceSizes || [];
+      }
+    });
+
     this.devices = devices;
     this.version = config.version;
     this.diagnostics = [
@@ -67,6 +79,9 @@ module.exports = class Context {
 
     /** @type {PaperSize[]} */
     this.paperSizes = config.paperSizes;
+
+    /** @type {Array<{source: string, dimensions: {x: number, y: number}}>} */
+    this.sourceSizes = config.sourceSizes || [];
 
     /** @type {string[]} */
     this.actions = userOptions.actions().map(a => a.name);

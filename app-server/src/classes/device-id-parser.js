@@ -6,11 +6,18 @@ module.exports = class DeviceIdParser {
   }
 
   /**
+   * @returns {Array<{id: string, description: string}>}
+   */
+  entries() {
+    return Regex.with(/device `?([^']+)'(.*)/g)
+      .matchAll(this.data)
+      .map(m => ({ id: m[1].trim(), description: m[2].trim() }));
+  }
+
+  /**
    * @returns {string[]}
    */
   ids() {
-    return Regex.with(/device `?(.*)'.*/g)
-      .matchAll(this.data)
-      .map(m => m[1]);
+    return this.entries().map(e => e.id);
   }
 };
