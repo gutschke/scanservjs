@@ -437,11 +437,28 @@ def detect_angle_by_projection(thresh, img_h, img_w,
         return best_a, best_v, var_0
 
     # Coarse pass, then refine around the peak.
-    best_coarse, _, _ = best_in_range(-angle_range, angle_range, coarse_step)
-    best_fine, best_v, var_0 = best_in_range(
+    best_coarse, _, coarse_var_0 = best_in_range(-angle_range, angle_range, coarse_step)
+
+    # Boundary guard: if the coarse peak is at the search limit the function
+    # is seeing monotonically increasing variance towards the edge of the
+    # search range rather than a real interior peak.  This happens when the
+    # document content is vertical (landscape text in a portrait scan) —
+    # horizontal row variance is low at 0° and rises slightly towards ±15°
+    # as tilted content begins to exit the image frame.  In that case there
+    # is no meaningful skew angle within the search window and the caller
+    # should fall back to the contour-based angle.  Return (0.0, 0.0) to
+    # signal "no reliable detection".
+    if abs(best_coarse) >= angle_range - coarse_step:
+        return 0.0, 0.0
+
+    best_fine, best_v, _ = best_in_range(
         best_coarse - coarse_step, best_coarse + coarse_step, fine_step)
 
-    peak_ratio = best_v / max(var_0, 1.0)
+    # Use coarse_var_0 (variance at 0° from the coarse pass, which always
+    # samples 0°) as the denominator.  The fine pass only samples 0° when the
+    # peak is near 0°; for any other tilt the fine range does not include 0°
+    # and its var_0 is 0, yielding a meaninglessly large peak_ratio.
+    peak_ratio = best_v / max(coarse_var_0, 1.0)
     return best_fine, peak_ratio
 
 
