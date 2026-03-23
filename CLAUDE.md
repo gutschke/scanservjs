@@ -42,6 +42,7 @@ git fetch upstream && git merge upstream/master
 | `features/ui-dimensions/` | `feature/ui-dimensions` |
 | `features/ui-fixes/` | `feature/ui-fixes` |
 | `features/editor/` | `feature/editor` |
+| `features/editor-race-fix/` | `feature/editor-race-fix` |
 | `features/about-fork/` | `feature/about-fork` |
 | `features/security/` | `feature/security` |
 | `features/thumbnail/` | `feature/thumbnail` |
