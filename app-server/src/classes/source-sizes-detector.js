@@ -77,10 +77,11 @@ module.exports = class SourceSizesDetector {
   /**
    * Query an eSCL ScannerCapabilities endpoint and return per-source limits.
    *
-   * Dimension values in the eSCL XML are in units of 1/10 mm (so divide by
-   * 10 to get mm). This matches the format used by HP and airscan-compatible
-   * devices; the conversion factor can be verified by checking that the
-   * reported flatbed MaxHeight matches the known physical flatbed size.
+   * Dimension values in the eSCL XML are in PWG raster units (1/300 inch).
+   * Multiply by 25.4 and divide by 300 to convert to mm.  This matches the
+   * format used by HP and airscan-compatible devices; the conversion can be
+   * verified by checking that the reported flatbed MaxHeight matches the
+   * known physical flatbed size (e.g. 2550 units → 215.9 mm = letter width).
    *
    * @param {string} ip
    * @returns {Promise<Array<{source: string, dimensions: {x: number, y: number}}>>}
@@ -89,8 +90,9 @@ module.exports = class SourceSizesDetector {
     const xml = await fetchUrl(`http://${ip}/eSCL/ScannerCapabilities`);
     const result = [];
 
-    // eSCL units: 1/10 mm
-    const toMm = v => Math.round(v) / 10;
+    // eSCL units: 1/300 inch (PWG raster units).  Convert to mm:
+    //   v / 300 in/unit * 25.4 mm/in, rounded to 0.1 mm.
+    const toMm = v => Math.round(v / 300 * 25.4 * 10) / 10;
 
     const platenW = extractFromSection(xml, 'PlatenInputCaps', 'MaxWidth');
     const platenH = extractFromSection(xml, 'PlatenInputCaps', 'MaxHeight');

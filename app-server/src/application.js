@@ -82,6 +82,11 @@ module.exports = new class Application {
       if (devices.length === 0) {
         this.log().debug('devices.json contains no devices. Reloading');
         devices = null;
+      } else if (Array.isArray(o) && o.some(d => typeof d === 'string' || !('sourceSizes' in d))) {
+        // Cache is in the old format (plain SANE strings without sourceSizes).
+        // Invalidate so eSCL detection runs on next load.
+        this.log().info('devices.json is in old format (no sourceSizes). Reloading');
+        devices = null;
       }
     } else {
       this.log().info('devices.json does not exist. Reloading');

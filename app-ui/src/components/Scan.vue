@@ -296,6 +296,7 @@ export default {
       },
       device: device,
       img: null,
+      rawImg: null,
       request: request,
       preview: {
         timer: 0,
@@ -530,6 +531,9 @@ export default {
     },
     lockedAspectRatio(val) {
       storage.lockedAspectRatio = val;
+    },
+    'request.params.source'() {
+      this._extendPreviewCanvas();
     }
   },
 
@@ -559,7 +563,7 @@ export default {
 
     _resizePreview() {
       const paperRatio = this.geometry
-        ? this.deviceSize.width / this.deviceSize.height
+        ? this.effectiveDeviceSize.width / this.effectiveDeviceSize.height
         : 210 / 297;
 
       const mdBreakpoint = 960;
@@ -678,7 +682,7 @@ export default {
     },
 
     pixelsPerMm() {
-      const scanner = this.deviceSize;
+      const scanner = this.effectiveDeviceSize;
       const image = this.$refs.cropper.imageSize;
       // When magic is active and image is rotated 90/270, the display image axes
       // are swapped relative to the scanner bed axes.
@@ -813,6 +817,39 @@ export default {
       });
     },
 
+    _extendPreviewCanvas() {
+      const raw = this.rawImg;
+      if (!raw || !this.geometry) {
+        this.img = raw;
+        this._resizePreview();
+        return;
+      }
+      const eff = this.effectiveDeviceSize;
+      const phys = this.deviceSize;
+      if (!eff || !phys || eff.height <= phys.height) {
+        this.img = raw;
+        this._resizePreview();
+        return;
+      }
+      // The effective scan area (ADF) is taller than the physical flatbed.
+      // Extend the preview canvas downward with a grey fill so the cropper
+      // has the full ADF height available for selection.
+      const srcImg = new Image();
+      srcImg.onload = () => {
+        const scale = eff.height / phys.height;
+        const canvas = document.createElement('canvas');
+        canvas.width = srcImg.width;
+        canvas.height = Math.round(srcImg.height * scale);
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#d0d0d0';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(srcImg, 0, 0, srcImg.width, srcImg.height);
+        this.img = canvas.toDataURL('image/jpeg', 0.9);
+        this._resizePreview();
+      };
+      srcImg.src = raw;
+    },
+
     readPreview() {
       const params = new URLSearchParams(this.request.filters.map(e => ['filter', e]));
       params.append('rotation', this.transformations.rotation);
@@ -835,10 +872,10 @@ export default {
         cache: 'no-store',
         method: 'GET'
       }).then(data => {
-        this.img = 'data:image/jpeg;base64,' + data.content;
+        this.rawImg = 'data:image/jpeg;base64,' + data.content;
         this.baselineBrightness = this.request.params.brightness || 0;
         this.baselineContrast = this.request.params.contrast || 0;
-        this._resizePreview();
+        this._extendPreviewCanvas();
       });
     },
 
@@ -994,7 +1031,7 @@ export default {
 
       this.mask(1);
       this.originalParams = Common.clone(this.request.params);
-      
+
       // We send full bed dimensions to ensure the script doesn't try to scale-to-fit
       const params = Common.clone(this.request.params);
       params.left = 0;

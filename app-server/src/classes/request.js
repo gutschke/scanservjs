@@ -72,6 +72,20 @@ module.exports = class Request {
         requestedSource.toLowerCase().includes(sc.source.toLowerCase()))
       : null;
 
+    // Look up source constraint before clamping geometry so it can override
+    // the SANE-reported device-wide limits in either direction (shrink for
+    // flatbed, expand for ADF that supports longer paper than the flatbed cap).
+    // Use data.params.source here because this.params.source isn't set yet.
+    const requestedSource = data.params.source
+      || ('--source' in features ? features['--source'].default : null);
+    const deviceSourceSizes = device.sourceSizes && device.sourceSizes.length
+      ? device.sourceSizes
+      : (context.sourceSizes || []);
+    const sourceConstraint = (deviceSourceSizes.length && requestedSource)
+      ? deviceSourceSizes.find(sc =>
+        requestedSource.toLowerCase().includes(sc.source.toLowerCase()))
+      : null;
+
     if ('-t' in features) {
       this.params.top = constrainWithFeature(data.params.top || features['-t'].limits[0], features['-t']);
     }
