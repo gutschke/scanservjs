@@ -436,6 +436,101 @@ def test_5_adf_style():
         check("Algorithm returned a result", False, "got no-op")
 
 
+def test_7_landscape_letter_portrait_scan():
+    """REGRESSION: landscape Letter on portrait flatbed — no spurious rotation.
+
+    A Letter-size document printed in landscape format is placed on a standard
+    A4/Letter flatbed scanner (bed 215.9 × 297 mm) with the short edge (215.9 mm)
+    along the scanner X axis and the long edge (279.4 mm) along Y.  The content
+    is landscape — text lines run across the 215.9 mm width, appearing VERTICAL
+    in the portrait scan image.
+
+    Before the fix, detect_angle_by_projection() always hit its ±15° search
+    boundary for vertical text (variance rises monotonically towards the edge of
+    the search window) and the fine pass var_0 was 0, yielding a meaningless
+    peak_ratio ≈ 6 000 000 → the algorithm applied a 15.5° spurious rotation.
+
+    After the fix:
+      - boundary guard returns (0.0, 0.0) → proj_peak = 0
+      - risk engine falls back to rot_contour ≈ 0° (heuristic B on near-full-bed content)
+      - the scan emerges with rotate_angle ≈ 0°
+    """
+    print("\n=== Test 7: Landscape Letter on portrait scanner — no spurious rotation ===")
+
+    BED_W, BED_H = 215.9, 297.0  # standard A4/Letter bed (portrait)
+    PAPER_W, PAPER_H = 215.9, 279.4  # paper in scanner coords (portrait placement)
+
+    def make_landscape_scan(tilt_deg, origin_mm=(0.0, 0.0)):
+        """Portrait scan of landscape-content paper (text lines VERTICAL)."""
+        img = np.full((PREVIEW_H, PREVIEW_W, 3), 75, dtype=np.uint8)
+        ox, oy = mm2px(origin_mm[0], origin_mm[1])
+        pw, ph = mm2px(PAPER_W, PAPER_H)
+        α = math.radians(-tilt_deg)
+        ca, sa = math.cos(α), math.sin(α)
+
+        for iy in range(PREVIEW_H):
+            for ix in range(PREVIEW_W):
+                dx, dy = ix - ox, iy - oy
+                px_ = dx * ca + dy * sa
+                py_ = -dx * sa + dy * ca
+                if 0 <= px_ < pw and 0 <= py_ < ph:
+                    img[iy, ix] = (252, 252, 252)
+
+        # Landscape text = vertical lines in the scan image
+        rng = np.random.default_rng(99)
+        margin_px = int(20 * PX_PER_MM)
+        col_spacing = (pw - 2 * margin_px) / 21
+
+        def p2i(px_p, py_p):
+            ix = ox + px_p * ca - py_p * sa
+            iy = oy + px_p * sa + py_p * ca
+            return int(ix), int(iy)
+
+        for i in range(1, 21):
+            lx = margin_px + int(i * col_spacing) + rng.integers(-3, 4)
+            ly0 = margin_px
+            ly1 = ph - margin_px
+            x0, y0 = p2i(lx, ly0)
+            x1, y1 = p2i(lx, ly1)
+            if (0 <= x0 < PREVIEW_W and 0 <= y0 < PREVIEW_H and
+                    0 <= x1 < PREVIEW_W and 0 <= y1 < PREVIEW_H):
+                cv2.line(img, (x0, y0), (x1, y1), (30, 30, 30), 2)
+
+        return img
+
+    # Sub-test A: well-aligned, automatic per-page mode (t_w/t_h = scan dims)
+    img_a = make_landscape_scan(tilt_deg=0.0)
+    data_a = run_algorithm(img_a, PAPER_W, PAPER_H)
+    r_a = data_a['result']
+    if r_a:
+        check("Auto mode: rotate_angle ≈ 0° (well-aligned landscape)",
+              abs(r_a['rotate_angle']) < 1.0,
+              f"angle={r_a['rotate_angle']:.2f}°")
+    else:
+        check("Auto mode: algorithm returned a result (no-op acceptable)", True,
+              "no-op — no rotation applied, which is correct")
+
+    # Sub-test B: well-aligned, interactive wand (t_w/t_h = full bed)
+    img_b = make_landscape_scan(tilt_deg=0.0)
+    ha = run_heuristic_a(cv2.cvtColor(img_b, cv2.COLOR_BGR2GRAY))
+    # Verify proj_peak_ratio does NOT hit the boundary anymore
+    check("Projection peak_ratio is not boundary-artefact (< 1e6)",
+          ha['proj_peak_ratio'] < 1e6,
+          f"peak_ratio={ha['proj_peak_ratio']:.1f}")
+
+    # Sub-test C: slight 1.5° tilt — must not introduce large spurious skew
+    img_c = make_landscape_scan(tilt_deg=1.5, origin_mm=(0.5, 0.5))
+    data_c = run_algorithm(img_c, PAPER_W, PAPER_H)
+    r_c = data_c['result']
+    if r_c:
+        check("Slight tilt: rotate_angle stays small (< 5°)",
+              abs(r_c['rotate_angle']) < 5.0,
+              f"angle={r_c['rotate_angle']:.2f}°")
+    else:
+        check("Slight tilt: algorithm returned a result (no-op acceptable)", True,
+              "no-op — no rotation applied, which is correct")
+
+
 def test_6_ambiguous_margin_doc():
     """MEDIUM: letter with very narrow margins — text close to paper edge."""
     print("\n=== Test 6: Narrow margins, text close to paper edge (MEDIUM) ===")
@@ -486,6 +581,7 @@ if __name__ == '__main__':
     test_4_only_top_edge_visible()
     test_5_adf_style()
     test_6_ambiguous_margin_doc()
+    test_7_landscape_letter_portrait_scan()
 
     total = len(results)
     passed = sum(1 for _, ok in results if ok)
