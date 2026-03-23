@@ -323,15 +323,25 @@ class EditorSession {
   /**
    * Prepare and merge pages from an edit list into a single PDF.
    * Shared by save() and assemblePreview().
+   *
+   * Each invocation uses a unique random ID as a filename prefix so that
+   * concurrent calls (e.g. an assemblePreview triggered by switching to view
+   * mode while a save is still in progress) never read or write each other's
+   * intermediate files, preventing content corruption in the final output.
+   *
    * @param {Array} editList - array of {source, pageNum, rotation, isBlank, width, height, sourceType}
-   * @returns {Promise<string>} path to assembled PDF
+   * @returns {Promise<string>} path to assembled PDF (caller must delete when done)
    */
   async _assemblePages(editList) {
+    const invId = crypto.randomBytes(4).toString('hex');
     const preparedPaths = [];
+    const allTempPaths = [];
 
     for (let i = 0; i < editList.length; i++) {
       const entry = editList[i];
-      const prepPath = path.join(this.dir, 'pages', `prepared-${String(i).padStart(4, '0')}.pdf`);
+      const prepPath = path.join(this.dir, 'pages',
+        `prepared-${invId}-${String(i).padStart(4, '0')}.pdf`);
+      allTempPaths.push(prepPath);
 
       if (entry.isBlank) {
         await this.pdfTool.createBlank(
@@ -363,7 +373,8 @@ class EditorSession {
         const h = Math.round(entry.targetSize.y * MM_TO_PT);
         const marginPts = entry.useMargin ? Math.round(10 * MM_TO_PT) : 0;
         const sizedPath = path.join(this.dir, 'pages',
-          `sized-${String(i).padStart(4, '0')}.pdf`);
+          `sized-${invId}-${String(i).padStart(4, '0')}.pdf`);
+        allTempPaths.push(sizedPath);
         await this.pdfTool.placeOnPage(prepPath, w, h, entry.pageFitMode, marginPts, sizedPath);
         preparedPaths.push(sizedPath);
       } else {
@@ -371,12 +382,17 @@ class EditorSession {
       }
     }
 
-    // Merge all prepared pages
-    const assembledPath = path.join(this.dir, 'assembled.pdf');
+    // Merge all prepared pages into an invocation-unique assembled file
+    const assembledPath = path.join(this.dir, `assembled-${invId}.pdf`);
     if (preparedPaths.length === 1) {
       fs.copyFileSync(preparedPaths[0], assembledPath);
     } else {
       await this.pdfTool.mergePages(preparedPaths, assembledPath);
+    }
+
+    // Clean up per-invocation prepared files; assembled file is cleaned up by caller
+    for (const p of allTempPaths) {
+      try { fs.unlinkSync(p); } catch (e) { /* ignore cleanup errors */ }
     }
 
     return assembledPath;
@@ -384,18 +400,20 @@ class EditorSession {
 
   /**
    * Apply document-level paper size adjustment to an assembled PDF.
-   * @param {string} inputPath - path to assembled PDF
+   * @param {string} inputPath - path to assembled PDF (invocation-unique)
    * @param {{x: number, y: number}} paperSize - target dimensions in mm
    * @param {'set-size'|'fit'|'fill'} fitMode
    * @param {boolean} useMargin - whether to apply a ~1 cm margin
-   * @returns {Promise<string>} path to adjusted PDF
+   * @returns {Promise<string>} path to adjusted PDF (invocation-unique; caller must delete)
    */
   async _applyPaperSize(inputPath, paperSize, fitMode, useMargin) {
     const MM_TO_PT = 72 / 25.4;
     const w = Math.round(paperSize.x * MM_TO_PT);
     const h = Math.round(paperSize.y * MM_TO_PT);
     const marginPts = useMargin ? Math.round(10 * MM_TO_PT) : 0;
-    const outputPath = path.join(this.dir, 'paper-adjusted.pdf');
+    // Derive a unique output name from the (already unique) assembled input name
+    const base = path.basename(inputPath, '.pdf');
+    const outputPath = path.join(this.dir, `${base}-paper-adjusted.pdf`);
     await this.pdfTool.placeOnPage(inputPath, w, h, fitMode, marginPts, outputPath);
     return outputPath;
   }
@@ -413,25 +431,31 @@ class EditorSession {
   async save(editList, filename, paperSize = null, fitMode = null, fitMargin = false) {
     this.touch();
     FileInfo.unsafe(this.config.outputDirectory, filename);
-    let assembledPath = await this._assemblePages(editList);
+    const assembledPath = await this._assemblePages(editList);
+    let finalAssembled = assembledPath;
 
-    if (paperSize && fitMode) {
-      assembledPath = await this._applyPaperSize(assembledPath, paperSize, fitMode, fitMargin);
+    try {
+      if (paperSize && fitMode) {
+        finalAssembled = await this._applyPaperSize(assembledPath, paperSize, fitMode, fitMargin);
+        try { fs.unlinkSync(assembledPath); } catch (e) { /* ignore */ }
+      }
+
+      // Atomic write to output directory
+      const tempOutputPath = path.join(this.config.outputDirectory, `.tmp-${this.id}.pdf`);
+      const finalPath = path.join(this.config.outputDirectory, filename);
+      fs.copyFileSync(finalAssembled, tempOutputPath);
+      fs.renameSync(tempOutputPath, finalPath);
+
+      // Invalidate thumbnail cache for this filename
+      const thumbPath = path.join(this.config.thumbnailDirectory, filename);
+      if (fs.existsSync(thumbPath)) {
+        fs.unlinkSync(thumbPath);
+      }
+
+      return finalPath;
+    } finally {
+      try { fs.unlinkSync(finalAssembled); } catch (e) { /* ignore */ }
     }
-
-    // Atomic write to output directory
-    const tempOutputPath = path.join(this.config.outputDirectory, `.tmp-${this.id}.pdf`);
-    const finalPath = path.join(this.config.outputDirectory, filename);
-    fs.copyFileSync(assembledPath, tempOutputPath);
-    fs.renameSync(tempOutputPath, finalPath);
-
-    // Invalidate thumbnail cache for this filename
-    const thumbPath = path.join(this.config.thumbnailDirectory, filename);
-    if (fs.existsSync(thumbPath)) {
-      fs.unlinkSync(thumbPath);
-    }
-
-    return finalPath;
   }
 
   /**
@@ -443,9 +467,13 @@ class EditorSession {
   async assemblePreview(editList) {
     this.touch();
     const assembledPath = await this._assemblePages(editList);
-    const previewPath = path.join(this.dir, 'preview.pdf');
-    fs.copyFileSync(assembledPath, previewPath);
-    return previewPath;
+    try {
+      const previewPath = path.join(this.dir, 'preview.pdf');
+      fs.copyFileSync(assembledPath, previewPath);
+      return previewPath;
+    } finally {
+      try { fs.unlinkSync(assembledPath); } catch (e) { /* ignore */ }
+    }
   }
 
   /** Update lastAccessedAt timestamp. */
