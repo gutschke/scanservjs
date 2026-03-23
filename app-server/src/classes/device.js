@@ -7,6 +7,7 @@ module.exports = class Device {
     this.id = '';
     this.name = '';
     this.features = {};
+    this.sourceSizes = [];
     this.string = string;
     this.parse();
   }
@@ -65,6 +66,10 @@ module.exports = class Device {
   static from(s) {
     if (typeof s === 'string') {
       return new Device(s);
+    } else if (s && typeof s === 'object' && typeof s.sane === 'string') {
+      const device = new Device(s.sane);
+      device.sourceSizes = Array.isArray(s.sourceSizes) ? s.sourceSizes : [];
+      return device;
     } else {
       throw new Error('Unexpected data for Device');
     }

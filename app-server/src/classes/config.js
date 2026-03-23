@@ -111,19 +111,37 @@ module.exports = class Config {
         }
       ],
 
+      // Per-source maximum scan dimensions (admin override).
+      //
+      // For airscan/eSCL devices these values are auto-detected at startup by
+      // querying the eSCL ScannerCapabilities endpoint.  Set sourceSizes here
+      // only when auto-detection gives wrong results or is unavailable.
+      //
+      // Each entry maps a source name pattern (case-insensitive substring
+      // match against the SANE --source value) to the maximum x/y dimensions
+      // (in mm) supported by that source.  When a non-empty list is provided
+      // here it overrides auto-detected values for all devices.
+      //
+      // Example (flatbed limited to A4, ADF allows Legal):
+      //   sourceSizes: [
+      //     { source: 'flatbed', dimensions: { x: 216, y: 297 } },
+      //     { source: 'adf',     dimensions: { x: 216, y: 356 } }
+      //   ],
+      sourceSizes: [],
+
       paperSizes: [
-        { name: 'A3 (@:paper-size.portrait)', dimensions: { x: 297, y: 420 } },
-        { name: 'A4 (@:paper-size.portrait)', dimensions: { x: 210, y: 297 } },
-        { name: 'A5 (@:paper-size.portrait)', dimensions: { x: 148, y: 210 } },
-        { name: 'A5 (@:paper-size.landscape)', dimensions: { x: 210, y: 148 } },
-        { name: 'A6 (@:paper-size.portrait)', dimensions: { x: 105, y: 148 } },
-        { name: 'A6 (@:paper-size.landscape)', dimensions: { x: 148, y: 105 } },
-        { name: 'B3 (@:paper-size.portrait)', dimensions: { x: 353, y: 500 } },
-        { name: 'B4 (@:paper-size.portrait)', dimensions: { x: 250, y: 353 } },
-        { name: 'B5 (@:paper-size.portrait)', dimensions: { x: 176, y: 250 } },
-        { name: 'B5 (@:paper-size.landscape)', dimensions: { x: 250, y: 176 } },
-        { name: 'B6 (@:paper-size.portrait)', dimensions: { x: 125, y: 176 } },
-        { name: 'B6 (@:paper-size.landscape)', dimensions: { x: 176, y: 125 } },
+        { name: 'DIN A3 (@:paper-size.portrait)', dimensions: { x: 297, y: 420 } },
+        { name: 'DIN A4 (@:paper-size.portrait)', dimensions: { x: 210, y: 297 } },
+        { name: 'DIN A5 (@:paper-size.portrait)', dimensions: { x: 148, y: 210 } },
+        { name: 'DIN A5 (@:paper-size.landscape)', dimensions: { x: 210, y: 148 } },
+        { name: 'DIN A6 (@:paper-size.portrait)', dimensions: { x: 105, y: 148 } },
+        { name: 'DIN A6 (@:paper-size.landscape)', dimensions: { x: 148, y: 105 } },
+        { name: 'DIN B3 (@:paper-size.portrait)', dimensions: { x: 353, y: 500 } },
+        { name: 'DIN B4 (@:paper-size.portrait)', dimensions: { x: 250, y: 353 } },
+        { name: 'DIN B5 (@:paper-size.portrait)', dimensions: { x: 176, y: 250 } },
+        { name: 'DIN B5 (@:paper-size.landscape)', dimensions: { x: 250, y: 176 } },
+        { name: 'DIN B6 (@:paper-size.portrait)', dimensions: { x: 125, y: 176 } },
+        { name: 'DIN B6 (@:paper-size.landscape)', dimensions: { x: 176, y: 125 } },
         { name: 'DIN D3 (@:paper-size.portrait)', dimensions: { x: 272, y: 385 } },
         { name: 'DIN D4 (@:paper-size.portrait)', dimensions: { x: 192, y: 272 } },
         { name: 'DIN D5 (@:paper-size.portrait)', dimensions: { x: 136, y: 192 } },

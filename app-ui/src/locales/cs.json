@@ -177,7 +177,9 @@
     "rotate-ccw": "Otočit o 90° proti směru hodinových ručiček",
     "flip-h": "Překlopit vodorovně",
     "flip-v": "Překlopit svisle",
-    "autocrop-mode": "Automatický ořez"
+    "autocrop-mode": "Automatický ořez",
+    "message:source-size-exceeded": "Vybraná oblast ořezu překračuje maximální velikost podporovanou aktuálním zdrojem.",
+    "btn-reset-to-source-size": "Přizpůsobit zdroji"
   },
   "document-dialog": {
     "view": "Zobrazit",

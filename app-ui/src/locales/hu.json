@@ -177,7 +177,9 @@
     "rotate-ccw": "Elforgatás 90°-kal az óramutató járásával ellentétesen",
     "flip-h": "Vízszintes tükrözés",
     "flip-v": "Függőleges tükrözés",
-    "autocrop-mode": "Automatikus kivágás"
+    "autocrop-mode": "Automatikus kivágás",
+    "message:source-size-exceeded": "A kijelölt kivágási terület meghaladja a jelenlegi forrás által támogatott maximális méretet.",
+    "btn-reset-to-source-size": "Igazítás a forráshoz"
   },
   "document-dialog": {
     "view": "Megtekintés",

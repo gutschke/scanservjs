@@ -168,7 +168,9 @@
     "rotate-ccw": "Saat yönünün tersine 90° döndür",
     "flip-h": "Yatay çevir",
     "flip-v": "Dikey çevir",
-    "autocrop-mode": "Otomatik kırpma"
+    "autocrop-mode": "Otomatik kırpma",
+    "message:source-size-exceeded": "Seçilen kırpma alanı mevcut kaynak tarafından desteklenen maksimum boyutu aşıyor.",
+    "btn-reset-to-source-size": "Kaynağa sığdır"
   },
   "document-dialog": {
     "view": "Görüntüle",

@@ -177,7 +177,9 @@
     "rotate-ccw": "Rotate 90° counter-clockwise",
     "flip-h": "Flip horizontally",
     "flip-v": "Flip vertically",
-    "autocrop-mode": "Auto-Crop"
+    "autocrop-mode": "Auto-Crop",
+    "message:source-size-exceeded": "The selected crop area exceeds the maximum size supported by the current source.",
+    "btn-reset-to-source-size": "Fit to source"
   },
   "document-dialog": {
     "view": "View",

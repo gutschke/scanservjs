@@ -58,6 +58,20 @@ module.exports = class Request {
     assertContains(device.settings['batchMode'].options, this.batch, 'Invalid batchMode');
     assertContains(device.settings['autoCropMode'].options, this.autoCropMode, 'Invalid autoCropMode');
 
+    // Look up source constraint before clamping geometry so it can override
+    // the SANE-reported device-wide limits in either direction (shrink for
+    // flatbed, expand for ADF that supports longer paper than the flatbed cap).
+    // Use data.params.source here because this.params.source isn't set yet.
+    const requestedSource = data.params.source
+      || ('--source' in features ? features['--source'].default : null);
+    const deviceSourceSizes = device.sourceSizes && device.sourceSizes.length
+      ? device.sourceSizes
+      : (context.sourceSizes || []);
+    const sourceConstraint = (deviceSourceSizes.length && requestedSource)
+      ? deviceSourceSizes.find(sc =>
+        requestedSource.toLowerCase().includes(sc.source.toLowerCase()))
+      : null;
+
     if ('-t' in features) {
       this.params.top = constrainWithFeature(data.params.top || features['-t'].limits[0], features['-t']);
     }
@@ -65,10 +79,14 @@ module.exports = class Request {
       this.params.left = constrainWithFeature(data.params.left || features['-l'].limits[0], features['-l']);
     }
     if ('-x' in features) {
-      this.params.width = constrainWithFeature(data.params.width || features['-x'].limits[1], features['-x']);
+      const maxX = sourceConstraint ? sourceConstraint.dimensions.x : features['-x'].limits[1];
+      this.params.width = Math.max(features['-x'].limits[0],
+        Math.min(data.params.width || maxX, maxX));
     }
     if ('-y' in features) {
-      this.params.height = constrainWithFeature(data.params.height || features['-y'].limits[1], features['-y']);
+      const maxY = sourceConstraint ? sourceConstraint.dimensions.y : features['-y'].limits[1];
+      this.params.height = Math.max(features['-y'].limits[0],
+        Math.min(data.params.height || maxY, maxY));
     }
     if ('--page-height' in features) {
       this.params.pageHeight = constrainWithFeature(data.params.pageHeight, features['--page-height']);

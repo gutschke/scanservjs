@@ -168,7 +168,9 @@
     "rotate-ccw": "90° tegen de klok in draaien",
     "flip-h": "Horizontaal spiegelen",
     "flip-v": "Verticaal spiegelen",
-    "autocrop-mode": "Automatisch bijsnijden"
+    "autocrop-mode": "Automatisch bijsnijden",
+    "message:source-size-exceeded": "Het geselecteerde bijsnijdgebied overschrijdt de maximale grootte die door de huidige bron wordt ondersteund.",
+    "btn-reset-to-source-size": "Aanpassen aan bron"
   },
   "document-dialog": {
     "view": "Bekijken",

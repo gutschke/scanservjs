@@ -170,7 +170,9 @@
     "rotate-ccw": "90° gegen den Uhrzeigersinn drehen",
     "flip-h": "Horizontal spiegeln",
     "flip-v": "Vertikal spiegeln",
-    "autocrop-mode": "Automatischer Zuschnitt"
+    "autocrop-mode": "Automatischer Zuschnitt",
+    "message:source-size-exceeded": "Der ausgewählte Zuschneidebereich überschreitet die maximale Größe des aktuellen Einzugs.",
+    "btn-reset-to-source-size": "An Einzug anpassen"
   },
   "document-dialog": {
     "view": "Anzeigen",

@@ -168,7 +168,9 @@
     "rotate-ccw": "Obróć o 90° przeciwnie do ruchu wskazówek zegara",
     "flip-h": "Odbij poziomo",
     "flip-v": "Odbij pionowo",
-    "autocrop-mode": "Automatyczne kadrowanie"
+    "autocrop-mode": "Automatyczne kadrowanie",
+    "message:source-size-exceeded": "Wybrany obszar kadrowania przekracza maksymalny rozmiar obsługiwany przez bieżące źródło.",
+    "btn-reset-to-source-size": "Dopasuj do źródła"
   },
   "document-dialog": {
     "view": "Podgląd",

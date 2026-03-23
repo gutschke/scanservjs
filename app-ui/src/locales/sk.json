@@ -175,7 +175,9 @@
     "rotate-ccw": "Otočiť o 90° v protismere hodinových ručičiek",
     "flip-h": "Prevrátiť vodorovne",
     "flip-v": "Prevrátiť zvisle",
-    "autocrop-mode": "Automatické orezanie"
+    "autocrop-mode": "Automatické orezanie",
+    "message:source-size-exceeded": "Vybraná oblasť orezania presahuje maximálnu veľkosť podporovanú aktuálnym zdrojom.",
+    "btn-reset-to-source-size": "Prispôsobiť zdroju"
   },
   "document-dialog": {
     "view": "Zobraziť",

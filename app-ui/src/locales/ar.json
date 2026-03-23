@@ -174,7 +174,9 @@
     "rotate-ccw": "تدوير 90° عكس اتجاه عقارب الساعة",
     "flip-h": "قلب أفقي",
     "flip-v": "قلب رأسي",
-    "autocrop-mode": "القص التلقائي"
+    "autocrop-mode": "القص التلقائي",
+    "message:source-size-exceeded": "منطقة الاقتصاص المحددة تتجاوز الحجم الأقصى المدعوم من المصدر الحالي.",
+    "btn-reset-to-source-size": "ضبط حسب المصدر"
   },
   "document-dialog": {
     "view": "عرض",

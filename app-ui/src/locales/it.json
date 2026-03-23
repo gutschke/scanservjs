@@ -179,7 +179,9 @@
     "rotate-ccw": "Ruota di 90° in senso antiorario",
     "flip-h": "Capovolgi orizzontalmente",
     "flip-v": "Capovolgi verticalmente",
-    "autocrop-mode": "Ritaglio automatico"
+    "autocrop-mode": "Ritaglio automatico",
+    "message:source-size-exceeded": "L'area di ritaglio selezionata supera la dimensione massima supportata dalla sorgente corrente.",
+    "btn-reset-to-source-size": "Adatta alla sorgente"
   },
   "document-dialog": {
     "view": "Visualizza",

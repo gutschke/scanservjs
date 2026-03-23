@@ -151,7 +151,9 @@
     "message:deleted-preview": "已清除预览",
     "message:turn-documents": "旋转文件",
     "message:preview-of-page": "页面预览",
-    "autocrop-mode": "自动裁剪"
+    "autocrop-mode": "自动裁剪",
+    "message:source-size-exceeded": "所选裁剪区域超过当前来源所支持的最大尺寸。",
+    "btn-reset-to-source-size": "适配来源"
   },
   "document-dialog": {
     "view": "查看",

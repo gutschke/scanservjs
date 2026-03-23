@@ -170,7 +170,9 @@
     "rotate-ccw": "Pivoter de 90° dans le sens inverse des aiguilles d'une montre",
     "flip-h": "Retourner horizontalement",
     "flip-v": "Retourner verticalement",
-    "autocrop-mode": "Recadrage automatique"
+    "autocrop-mode": "Recadrage automatique",
+    "message:source-size-exceeded": "La zone de recadrage sélectionnée dépasse la taille maximale prise en charge par la source actuelle.",
+    "btn-reset-to-source-size": "Adapter à la source"
   },
   "document-dialog": {
     "view": "Voir",

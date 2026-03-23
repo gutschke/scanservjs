@@ -168,7 +168,9 @@
     "rotate-ccw": "Rotar 90° en sentido antihorario",
     "flip-h": "Voltear horizontalmente",
     "flip-v": "Voltear verticalmente",
-    "autocrop-mode": "Recorte automático"
+    "autocrop-mode": "Recorte automático",
+    "message:source-size-exceeded": "El área de recorte seleccionada excede el tamaño máximo admitido por la fuente actual.",
+    "btn-reset-to-source-size": "Ajustar a la fuente"
   },
   "document-dialog": {
     "view": "Ver",

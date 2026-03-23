@@ -1,5 +1,10 @@
 <template>
   <div>
+    <v-alert v-if="sourceSizeExceeded" type="warning" class="mb-4" density="compact">
+      {{ $t('scan.message:source-size-exceeded') }}
+      <v-btn size="small" variant="outlined" class="ml-4" @click="resetToSourceSize">{{ $t('scan.btn-reset-to-source-size') }}</v-btn>
+    </v-alert>
+
     <v-row>
       <v-spacer />
 
@@ -286,6 +291,7 @@ export default {
           device
         ],
         paperSizes: [],
+        sourceSizes: [],
         version: '0'
       },
       device: device,
@@ -320,6 +326,48 @@ export default {
         width: this.device.features['-x'].limits[1],
         height: this.device.features['-y'].limits[1]
       };
+    },
+
+    effectiveDeviceSize() {
+      if (!this.geometry) {
+        return undefined;
+      }
+      const physical = this.deviceSize;
+      const source = this.request.params.source;
+      const sourceSizes = (this.device.sourceSizes && this.device.sourceSizes.length)
+        ? this.device.sourceSizes
+        : (this.context.sourceSizes || []);
+      if (source && sourceSizes.length) {
+        const constraint = sourceSizes.find(sc =>
+          source.toLowerCase().includes(sc.source.toLowerCase())
+        );
+        if (constraint) {
+          // Use the configured dimensions directly — do not cap against the
+          // SANE-reported physical max.  SANE reports a single device-wide
+          // geometry (usually the flatbed) and the ADF may support longer
+          // paper (e.g. Legal) that exceeds that cap.  The admin's explicit
+          // or auto-detected sourceSizes entry overrides SANE in both directions.
+          return {
+            width: constraint.dimensions.x,
+            height: constraint.dimensions.y
+          };
+        }
+      }
+      return physical;
+    },
+
+    sourceSizeExceeded() {
+      if (!this.geometry) {
+        return false;
+      }
+      const eff = this.effectiveDeviceSize;
+      const physical = this.deviceSize;
+      if (!eff || (eff.width >= physical.width && eff.height >= physical.height)) {
+        return false;
+      }
+      const p = this.request.params;
+      return ((p.left || 0) + (p.width || 0)) > eff.width + 0.1 ||
+             ((p.top || 0) + (p.height || 0)) > eff.height + 0.1;
     },
 
     batchModes() {
@@ -382,13 +430,10 @@ export default {
         return undefined;
       }
 
-      const deviceSize = {
-        x: this.device.features['-x'].limits[1],
-        y: this.device.features['-y'].limits[1]
-      };
+      const eff = this.effectiveDeviceSize;
 
       return this.context.paperSizes
-        .filter(paper => paper.dimensions.x <= deviceSize.x && paper.dimensions.y <= deviceSize.y)
+        .filter(paper => paper.dimensions.x <= eff.width && paper.dimensions.y <= eff.height)
         .map(paper => {
           const variables = (paper.name.match(/@:[a-z-.]+/ig) || []).map(s => s.substr(2));
           variables.forEach(v => {
@@ -700,6 +745,11 @@ export default {
     },
 
     onCropperChange({ coordinates }) {
+      if (this._ignoreCropperChange) {
+        this._ignoreCropperChange = false;
+        return;
+      }
+
       const ppm = this.pixelsPerMm();
       const displayMm = this.scaleCoordinates(
         coordinates,
@@ -707,7 +757,8 @@ export default {
         1 / ppm.y);
       const adjusted = this._displayToDeskewedRect(displayMm);
 
-      const scanner = this.deviceSize;
+
+      const scanner = this.effectiveDeviceSize;
       const params = this.request.params;
       const threshold = 0.4;
       const boundAndRound = (n, min, max) => round(Math.min(Math.max(min, n), max), 1);
@@ -903,10 +954,26 @@ export default {
 
     updatePaperSize(value) {
       if (value.dimensions) {
+        this.request.params.left = 0;
+        this.request.params.top = 0;
         this.request.params.width = value.dimensions.x;
         this.request.params.height = value.dimensions.y;
+        this._ignoreCropperChange = true;
         this.onCoordinatesChange();
       }
+    },
+
+    resetToSourceSize() {
+      const eff = this.effectiveDeviceSize;
+      if (!eff) {
+        return;
+      }
+      const p = this.request.params;
+      p.width = Math.min(p.width || eff.width, eff.width);
+      p.height = Math.min(p.height || eff.height, eff.height);
+      p.left = Math.min(p.left || 0, Math.max(0, eff.width - p.width));
+      p.top = Math.min(p.top || 0, Math.max(0, eff.height - p.height));
+      this.onCoordinatesChange();
     },
 
     autoCrop() {
