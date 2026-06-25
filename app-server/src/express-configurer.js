@@ -9,6 +9,7 @@ const swaggerJsdoc = require('swagger-jsdoc');
 const swaggerUi = require('swagger-ui-express');
 const FileInfo = require('./classes/file-info');
 const Process = require('./classes/process');
+const { withHeartbeat } = require('./classes/response-heartbeat');
 const application = require('./application');
 const config = application.config();
 
@@ -185,7 +186,8 @@ const EndpointSpecs = [
   {
     method: 'post',
     path: '/api/v1/autocrop',
-    callback: async (req, res) => res.send(await api.autoCrop(req.body))
+    longRunning: true,
+    callback: async (req) => api.autoCrop(req.body)
   },
   {
     method: 'delete',
@@ -195,17 +197,20 @@ const EndpointSpecs = [
   {
     method: 'post',
     path: '/api/v1/autocrop',
-    callback: async (req, res) => res.send(await api.autoCrop(req.body))
+    longRunning: true,
+    callback: async (req) => api.autoCrop(req.body)
   },
   {
     method: 'post',
     path: '/api/v1/preview',
-    callback: async (req, res) => res.send(await api.createPreview(req.body))
+    longRunning: true,
+    callback: async (req) => api.createPreview(req.body)
   },
   {
     method: 'post',
     path: '/api/v1/scan',
-    callback: async (req, res) => res.send(await api.scan(req.body))
+    longRunning: true,
+    callback: async (req) => api.scan(req.body)
   },
   {
     method: 'get',
@@ -274,10 +279,8 @@ const EndpointSpecs = [
   {
     method: 'post',
     path: '/api/v1/editor/sessions',
-    callback: async (req, res) => {
-      const result = await editorApi.createSession(req.body.files);
-      res.send(result);
-    }
+    longRunning: true,
+    callback: async (req) => editorApi.createSession(req.body.files)
   },
   {
     method: 'get',
@@ -309,17 +312,16 @@ const EndpointSpecs = [
   {
     method: 'post',
     path: /\/api\/v1\/editor\/sessions\/([^/]+)\/pages/,
-    callback: async (req, res) => {
-      const result = await editorApi.addPages(req.params[0], req.body.file);
-      res.send(result);
-    }
+    longRunning: true,
+    callback: async (req) => editorApi.addPages(req.params[0], req.body.file)
   },
   {
     method: 'post',
     path: /\/api\/v1\/editor\/sessions\/([^/]+)\/preview/,
-    callback: async (req, res) => {
+    longRunning: true,
+    callback: async (req) => {
       await editorApi.assemblePreview(req.params[0], req.body.pages);
-      res.send({ ok: true });
+      return { ok: true };
     }
   },
   {
@@ -347,13 +349,11 @@ const EndpointSpecs = [
   {
     method: 'post',
     path: /\/api\/v1\/editor\/sessions\/([^/]+)\/save/,
-    callback: async (req, res) => {
-      const result = await editorApi.save(
-        req.params[0], req.body.pages, req.body.filename,
-        req.body.paperSize || null, req.body.fitMode || null,
-        req.body.fitMargin || false);
-      res.send(result);
-    }
+    longRunning: true,
+    callback: async (req) => editorApi.save(
+      req.params[0], req.body.pages, req.body.filename,
+      req.body.paperSize || null, req.body.fitMode || null,
+      req.body.fitMargin || false)
   },
   {
     method: 'delete',
@@ -463,10 +463,16 @@ module.exports = class ExpressConfigurer {
     EndpointSpecs.forEach(spec => {
       this.app[spec.method](spec.path, async (req, res) => {
         log.info(formatForLog(req));
-        try {
-          await spec.callback(req, res);
-        } catch (error) {
-          sendError(res, 500, error);
+        if (spec.longRunning) {
+          // The callback resolves with the JSON payload; withHeartbeat keeps the
+          // connection alive (reverse-proxy read timeouts) and sends the result.
+          await withHeartbeat(res, () => spec.callback(req, res));
+        } else {
+          try {
+            await spec.callback(req, res);
+          } catch (error) {
+            sendError(res, 500, error);
+          }
         }
       });
     });
