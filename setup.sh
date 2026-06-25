@@ -92,6 +92,7 @@ create_worktree "features/about-fork"          "feature/about-fork"
 create_worktree "features/security"            "feature/security"
 create_worktree "features/thumbnail"           "feature/thumbnail"
 create_worktree "features/xfa"               "feature/xfa"
+create_worktree "features/scan-keepalive"      "feature/scan-keepalive"
 
 # ── 6. Claude Code symlinks ──────────────────────────────────────────────────
 echo ""

@@ -47,6 +47,7 @@ git fetch upstream && git merge upstream/master
 | `features/security/` | `feature/security` |
 | `features/thumbnail/` | `feature/thumbnail` |
 | `features/xfa/` | `feature/xfa` |
+| `features/scan-keepalive/` | `feature/scan-keepalive` |
 
 `features/`, `dev/`, and `binary/` are excluded from git tracking via
 `.git/info/exclude`.
