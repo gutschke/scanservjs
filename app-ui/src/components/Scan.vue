@@ -872,6 +872,11 @@ export default {
         cache: 'no-store',
         method: 'GET'
       }).then(data => {
+        // _fetch resolves with the error value on failure; ignore anything that
+        // is not a preview payload.
+        if (!data || typeof data !== 'object' || !data.content) {
+          return;
+        }
         this.rawImg = 'data:image/jpeg;base64,' + data.content;
         this.baselineBrightness = this.request.params.brightness || 0;
         this.baselineContrast = this.request.params.contrast || 0;
@@ -957,7 +962,13 @@ export default {
           'Content-Type': 'application/json'
         }
       }).then((response) => {
-        if (response && 'index' in response) {
+        // On failure _fetch resolves with the error value (after notifying the
+        // user), not a scan response. Only act on a genuine result so a failed
+        // scan never navigates to Files as though it had succeeded.
+        if (!response || typeof response !== 'object') {
+          return;
+        }
+        if ('index' in response) {
           const options = {
             message: this.$t('scan.message:turn-documents'),
             onFinish: () => {},
@@ -979,7 +990,7 @@ export default {
             };
           }
           this.$refs.batchDialog.open(options);
-        } else {
+        } else if ('file' in response) {
           if (storage.settings.showFilesAfterScan) {
             this.$router.push('/files');
           } else {
